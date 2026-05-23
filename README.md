@@ -22,13 +22,18 @@ Still to do:
 
 ## Data
 
-Main source:
-
+Main source used in the current analysis:
 - Our World in Data COVID-19 dataset: <https://raw.githubusercontent.com/owid/covid-19-data/refs/heads/master/public/data/owid-covid-data.csv>
+- OWID codebook: <https://raw.githubusercontent.com/owid/covid-19-data/refs/heads/master/public/data/owid-covid-codebook.csv>
 
 In the downloaded OWID file, Germany daily case/death reporting is available through **15 July 2023**, while cumulative totals continue through **4 August 2024**.
 
-Raw data are stored in `data/raw/`. Processed data used by the plots are stored in `data/processed/`.
+Raw data are stored in `data/raw/`. Processed data used by the plots are stored in `data/processed/`. The cleaning script `scripts/01_clean_merge.py` filters the main OWID dataset to Germany (`DEU`) and Poland (`POL`).
+
+Additional raw files, not used in the current plots:
+- `owid_weekly_cases_current.csv`: OWID Grapher weekly cases dataset, <https://ourworldindata.org/grapher/weekly-covid-cases.csv>
+- `owid_weekly_deaths_current.csv`: OWID Grapher weekly deaths dataset, <https://ourworldindata.org/grapher/weekly-covid-deaths.csv>
+- `ecdc_variants.csv`: ECDC SARS-CoV-2 variants dataset, <https://www.ecdc.europa.eu/en/publications-data/data-virus-variants-covid-19-eueea>
 
 ## How To Run
 
