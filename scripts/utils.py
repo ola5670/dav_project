@@ -199,3 +199,28 @@ def save_figure(fig: plt.Figure, name: str) -> None:
     plt.close(fig)
     print(f"Saved {png_path.relative_to(project_root)}")
     print(f"Saved {svg_path.relative_to(project_root)}")
+
+
+def save_plotly_html(plotly_fig, path) -> None:
+    """Save a Plotly figure as a self-contained, responsive HTML file.
+
+    Injects CSS so the chart fills 100 % of its iframe container and has no
+    scrollbars — required for the srcdoc-embedded Reveal.js slides.
+
+    Args:
+        plotly_fig: A ``plotly.graph_objects.Figure`` instance.
+        path: Destination ``pathlib.Path`` (parent dirs are created).
+    """
+    responsive_css = (
+        "html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;}"
+        ".js-plotly-plot,.plot-container{width:100%!important;height:100%!important;}"
+    )
+    html = plotly_fig.to_html(
+        full_html=True,
+        include_plotlyjs="cdn",
+        config={"responsive": True, "displaylogo": False},
+    )
+    html = html.replace("</head>", f"<style>{responsive_css}</style></head>", 1)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(html, encoding="utf-8")
+    print(f"Saved {path.relative_to(project_root)}")

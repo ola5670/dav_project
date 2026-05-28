@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COVID-19 in Germany — DAV Project</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" />
+  <style>
+    :root {
+      --r-background-color: #ffffff;
+      --r-main-font: "Segoe UI", "DejaVu Sans", sans-serif;
+      --r-heading-color: #111827;
+      --r-main-color: #374151;
+      --r-link-color: #0072B2;
+      --accent-blue:  #0072B2;
+      --accent-red:   #D55E00;
+      --accent-green: #009E73;
+      --accent-pink:  #CC79A7;
+      --muted: #6B7280;
+      --grid: #E5E7EB;
+    }
+
+    /* ── Base ──────────────────────────────────────────────── */
+    .reveal .slides section { text-align: left; }
+    .reveal h1 { font-size: 1.80em; line-height: 1.12; color: var(--r-heading-color); }
+    .reveal h2 { font-size: 1.18em; color: var(--r-heading-color);
+                 border-bottom: 2px solid var(--accent-blue);
+                 padding-bottom: 4px; margin-bottom: 0.40em; }
+    .reveal p, .reveal li { font-size: 0.72em; color: var(--r-main-color); line-height: 1.40; }
+    .reveal ul { margin-left: 1.0em; }
+    .reveal li { margin-bottom: 0.18em; }
+    .reveal strong { color: var(--r-heading-color); }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px;
+           font-size: 0.83em; color: #374151; }
+
+    /* ── Title slide ───────────────────────────────────────── */
+    .title-slide { text-align: center !important; }
+    .title-slide h1 { font-size: 1.85em; margin-bottom: 0.18em; }
+    .title-slide .subtitle { font-size: 0.85em; color: var(--muted); margin-bottom: 0.8em; }
+    .title-slide .authors  { font-size: 0.68em; color: var(--muted); }
+    .color-bar { display:flex; height:6px; width:50%; margin: 0.4em auto 1.0em; }
+    .color-bar span { flex:1; }
+
+    /* ── KPI cards ─────────────────────────────────────────── */
+    .kpi-row { display:flex; gap:10px; margin:0.3em 0 0.6em; }
+    .kpi-card { flex:1; background:#f9fafb; border:1px solid var(--grid);
+                border-radius:5px; padding:7px 11px; }
+    .kpi-card .kpi-label { font-size:0.56em; color:var(--muted);
+                           text-transform:uppercase; letter-spacing:.06em; }
+    .kpi-card .kpi-value { font-size:1.10em; font-weight:700; color:var(--r-heading-color); }
+    .kpi-card .kpi-note  { font-size:0.54em; color:var(--muted); }
+
+    /* ── Plot containers ───────────────────────────────────── */
+    .plot-full img  { max-height:78vh; width:auto; display:block; margin:0 auto; }
+    .plot-tall img  { max-height:80vh; width:auto; display:block; margin:0 auto; }
+    .plotly-frame   { width:100%; height:78vh; overflow:hidden; }
+    .plotly-frame iframe { width:100%; height:100%; border:none; overflow:hidden; }
+
+    /* ── Layout helpers ────────────────────────────────────── */
+    .two-col { display:flex; gap:14px; align-items:flex-start; }
+    .two-col > * { flex:1; min-width:0; }
+    .two-col img  { max-height:56vh; width:100%; object-fit:contain; }
+
+    /* ── Callout box (justification / notes) ───────────────── */
+    .callout {
+      background:#f0f7ff; border-left:3px solid var(--accent-blue);
+      border-radius:0 4px 4px 0; padding:6px 11px; margin:0.35em 0;
+    }
+    .callout p, .callout li { font-size:0.68em; color:#1e3a5f; margin:0.15em 0; }
+    .callout strong { color:#0c2444; }
+
+    .callout-warn {
+      background:#fff7ed; border-left:3px solid var(--accent-red);
+    }
+    .callout-warn p, .callout-warn li { color:#7c2d12; }
+
+    /* ── Method tag ────────────────────────────────────────── */
+    .method-tag {
+      display:inline-block; background:var(--accent-blue); color:#fff;
+      font-size:0.56em; font-weight:600; padding:2px 8px;
+      border-radius:20px; margin-bottom:4px; letter-spacing:.04em;
+    }
+    .method-tag.red   { background:var(--accent-red); }
+    .method-tag.green { background:var(--accent-green); }
+
+    /* ── Footer badge ──────────────────────────────────────── */
+    .source-badge {
+      position:absolute; bottom:6px; right:12px;
+      font-size:0.44em; color:var(--muted);
+    }
+
+    /* ── Conclusions ───────────────────────────────────────── */
+    .conclude li { font-size:0.72em; margin-bottom:0.35em; }
+    .conclude li::marker { color:var(--accent-blue); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ══════════════════════════════════════════ 1 · TITLE -->
+<section class="title-slide">
+  <div class="color-bar">
+    <span style="background:#0072B2"></span>
+    <span style="background:#D55E00"></span>
+    <span style="background:#009E73"></span>
+    <span style="background:#CC79A7"></span>
+    <span style="background:#E69F00"></span>
+  </div>
+  <h1>COVID-19 in Germany</h1>
+  <p class="subtitle">Descriptive &amp; inferential analysis · 2020 – 2024</p>
+  <p class="authors">DAV Project Group<br>Data Analysis &amp; Visualisation · 2025</p>
+  <div class="kpi-row" style="justify-content:center; margin-top:1.0em;">
+    <div class="kpi-card" style="border-top:4px solid var(--accent-blue);">
+      <div class="kpi-label">Confirmed cases</div>
+      <div class="kpi-value">38 437 756</div>
+      <div class="kpi-note">to 04 Aug 2024</div>
+    </div>
+    <div class="kpi-card" style="border-top:4px solid var(--accent-red);">
+      <div class="kpi-label">Deaths</div>
+      <div class="kpi-value">174 979</div>
+      <div class="kpi-note">CFR 0.46 %</div>
+    </div>
+    <div class="kpi-card" style="border-top:4px solid var(--accent-green);">
+      <div class="kpi-label">Vaccinated (1 dose)</div>
+      <div class="kpi-value">77.8 %</div>
+      <div class="kpi-note">76.2 % fully vaccinated</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ 2 · DATA & METHODS -->
+<section>
+  <h2>Data &amp; Methodology</h2>
+  <div class="two-col" style="font-size:0.88em;">
+    <div>
+      <p style="margin:0 0 0.18em;"><strong>Primary — Our World in Data (OWID)</strong></p>
+      <ul style="margin:0 0 0.4em;">
+        <li>CSV filtered to <code>iso_code == "DEU"</code></li>
+        <li>Daily: cases, deaths, ICU, vaccinations, excess mortality, R<sub>t</sub></li>
+        <li>Rates per 100 000 pop · 7-day rolling average</li>
+      </ul>
+      <p style="margin:0 0 0.18em;"><strong>Secondary — ECDC Variant Surveillance</strong></p>
+      <ul style="margin:0 0 0.4em;">
+        <li>Weekly % per lineage among sequenced samples, Germany</li>
+      </ul>
+      <p style="margin:0.3em 0 0.18em;"><strong>Analyses</strong></p>
+      <ul style="margin:0;">
+        <li><em>Descriptive:</em> Plots 1–5, 9–10</li>
+        <li><em>Inferential:</em> Regression (P6) + Holt-Winters (P7)</li>
+        <li><em>Comparative:</em> Germany vs Poland (P8)</li>
+      </ul>
+    </div>
+    <div>
+      <p style="margin:0 0 0.18em;"><strong>Wave definitions</strong></p>
+      <table style="border-collapse:collapse; width:100%; font-size:0.95em;">
+        <tr><td style="padding:2px 8px 2px 0; color:var(--accent-blue); font-weight:600;">W1</td><td style="padding:2px 4px;">Mar – Jun 2020</td><td style="padding:2px 0; color:var(--muted);">Wild-type</td></tr>
+        <tr><td style="padding:2px 8px 2px 0; color:var(--accent-blue); font-weight:600;">W2</td><td style="padding:2px 4px;">Oct 2020 – Feb 2021</td><td style="padding:2px 0; color:var(--muted);">Alpha</td></tr>
+        <tr><td style="padding:2px 8px 2px 0; color:var(--accent-blue); font-weight:600;">W3</td><td style="padding:2px 4px;">Mar – Jun 2021</td><td style="padding:2px 0; color:var(--muted);">Alpha/Delta</td></tr>
+        <tr><td style="padding:2px 8px 2px 0; color:var(--accent-blue); font-weight:600;">W4</td><td style="padding:2px 4px;">Oct 2021 – Jan 2022</td><td style="padding:2px 0; color:var(--muted);">Delta</td></tr>
+        <tr><td style="padding:2px 8px 2px 0; color:var(--accent-blue); font-weight:600;">W5</td><td style="padding:2px 4px;">Feb – Jun 2022</td><td style="padding:2px 0; color:var(--muted);">Omicron BA.1/2</td></tr>
+        <tr><td style="padding:2px 8px 2px 0; color:var(--muted); font-weight:600;">↓</td><td style="padding:2px 4px;">Jul 2022 – Dec 2024</td><td style="padding:2px 0; color:var(--muted);">Decline</td></tr>
+      </table>
+    </div>
+  </div>
+  <p style="font-size:0.56em; color:var(--muted); margin-top:0.5em;">Source: OWID · ECDC · HMD/WMD</p>
+</section>
+
+<!-- ══════════════════════════════════════════ 3 · OVERVIEW (interactive) -->
+<section>
+  <h2>Overview — Cases &amp; Deaths</h2>
+  <div class="plot-full"><img src="figures/plot01_daily_cases_deaths.png" alt="Daily cases and deaths" /></div>
+  <div class="source-badge">Plot 01 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 4 · 7-DAY INCIDENCE -->
+<section>
+  <h2>7-Day Incidence &amp; Wave Bands</h2>
+  <div class="plot-tall"><img src="figures/plot02_7day_incidence.png" alt="7-day incidence" /></div>
+  <div class="source-badge">Plot 02 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 5 · WAVE DISTRIBUTIONS -->
+<section>
+  <h2>Incidence Distribution by Wave Phase</h2>
+  <div class="plot-tall"><img src="figures/plot05_wave_phases.png" alt="Wave phase distributions" /></div>
+  <div class="source-badge" style="left:14px; right:auto;">Violin + box · 7-day incidence per wave &nbsp;|&nbsp; Plot 05 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 6 · CFR -->
+<section>
+  <h2>Case Fatality Rate over Time</h2>
+  <div style="text-align:center;">
+    <img src="figures/plot03_cfr_over_time.png" alt="Case fatality rate"
+         style="max-height:76vh; width:auto; display:inline-block;" />
+  </div>
+  <p style="font-size:0.60em; color:var(--muted); margin:0.2em 0 0;">
+    CFR peaked ~3.5 % in Wave 1 (limited testing capacity) and fell below 0.2 % after booster rollout.
+  </p>
+  <div class="source-badge">Plot 03 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 7 · EXCESS MORTALITY -->
+<section>
+  <h2>Excess Mortality</h2>
+  <div style="text-align:center;">
+    <img src="figures/plot09_excess_mortality.png" alt="Excess mortality"
+         style="max-height:78vh; width:auto; display:inline-block;" />
+  </div>
+  <p style="font-size:0.58em; color:var(--muted); margin:0.15em 0 0; text-align:left;">
+    Peak: Wave 2 winter 2020/21. Largely absent during Omicron — confirming vaccination impact. &nbsp;·&nbsp; <em>Plot 09 · OWID / HMD</em>
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════ 7 · VACCINATION (interactive) -->
+<section>
+  <h2>Vaccination Rollout</h2>
+  <div class="plot-full"><img src="figures/plot04_vaccination_progress.png" alt="Vaccination progress" /></div>
+  <p style="font-size:0.60em; color:var(--muted); margin:0.25em 0 0;">
+    50 % fully vaccinated: <strong>Aug 2021</strong>. Boosters from Nov 2021 ahead of Omicron wave.
+  </p>
+  <div class="source-badge">Plot 04 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 8 · VARIANTS -->
+<section>
+  <h2>Variant Dominance (ECDC Surveillance)</h2>
+  <div class="plot-tall"><img src="figures/plot10_variants_heatmap.png" alt="Variant dominance stackplot" /></div>
+  <div class="source-badge">Plot 10 · ECDC</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 9 · INFERENTIAL — RATIONALE -->
+<section>
+  <h2>Why These Inferential Methods?</h2>
+  <div class="two-col" style="font-size:0.74em; gap:10px; margin:0 auto; max-width:96%;">
+    <div>
+      <span class="method-tag" style="font-size:0.70em;">Plot 6 — Log-linear regression</span>
+      <div class="callout" style="padding:4px 9px; margin:0.2em 0;">
+        <p style="margin:0.10em 0;"><strong>Biological rationale:</strong> epidemic growth follows
+          <em>N(t) = N₀ · e<sup>rt</sup></em>. Log-transforming linearises → OLS is appropriate.</p>
+        <p style="margin:0.10em 0;"><strong>Estimate:</strong> growth rate <em>r</em> [day⁻¹]
+          and doubling time <em>T₂ = ln 2 / r</em> per wave.</p>
+        <p style="margin:0.10em 0;"><strong>Limitation:</strong> only the growth phase
+          (~first 40 % of wave days); peak and decline are not exponential.</p>
+      </div>
+      <div class="callout callout-warn" style="padding:4px 9px; margin:0.2em 0;">
+        <p style="margin:0;"><strong>Assumptions:</strong> homogeneous mixing, no saturation,
+          no large reporting changes within the window.</p>
+      </div>
+    </div>
+    <div>
+      <span class="method-tag green" style="font-size:0.70em;">Plot 7 — Holt-Winters forecast</span>
+      <div class="callout" style="padding:4px 9px; margin:0.2em 0;">
+        <p style="margin:0.10em 0;"><strong>Preferred over ARIMA because:</strong></p>
+        <ul style="margin:0.08em 0 0.08em 1em;">
+          <li style="margin-bottom:0.10em;">COVID waves are <em>non-stationary</em> — ARIMA differencing
+              discards the trend signal of interest</li>
+          <li style="margin-bottom:0.10em;">Short training windows (~10 weeks) — fewer hyper-parameters,
+              less risk of overfitting</li>
+          <li style="margin-bottom:0.10em;"><strong>90 % CI</strong> = residual σ × √k
+              (k = forecast horizon step)</li>
+        </ul>
+        <p style="margin:0.10em 0;"><strong>Two test periods:</strong> Wave 2 (Oct–Dec 2020)
+           and Omicron onset (Jan–Mar 2022) — different growth regimes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ 10 · REGRESSION (interactive) -->
+<section>
+  <h2>Wave Growth Speed — Doubling Time</h2>
+  <p style="font-size:0.44em; color:var(--muted); margin:0 0 0.3em 0; text-align:right;">Plot 06 · scipy.stats.linregress</p>
+  <div class="plot-full"><img src="figures/plot06_regression_trend.png" alt="Doubling time per wave" /></div>
+  <p style="font-size:0.60em; color:var(--muted); margin:0.4em 0 0;">
+    Shorter bar = faster-spreading wave. Reference lines: 7 d (very fast) · 14 d (moderate). OLS on log(new cases).
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════ 11 · FORECAST -->
+<section>
+  <h2>Holt-Winters Short-Term Forecast</h2>
+  <div style="text-align:center;">
+    <img src="figures/plot07_forecast_two_periods.png" alt="Forecast"
+         style="max-height:66vh; width:auto; display:inline-block;" />
+  </div>
+  <p style="font-size:0.60em; color:var(--muted); margin:0.3em 0 0;">
+    Shaded band = <strong>90 % prediction interval</strong> (σ × √k). Observed line after
+    the dashed cut-off shown for validation only — model was not given future data.
+    <em>statsmodels ExponentialSmoothing</em>
+  </p>
+  <div class="source-badge">Plot 07 · statsmodels</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 12 · GERMANY vs POLAND -->
+<section>
+  <h2>Germany vs Poland — 7-day Incidence &amp; Deaths per 100k</h2>
+  <div style="text-align:center;"><img src="figures/plot08_germany_poland.png" alt="Germany vs Poland" style="max-height:60vh; width:auto; display:inline-block;" /></div>
+  <ul style="margin:0.25em 0 0; font-size:0.62em; line-height:1.35;">
+    <li>Germany: consistently lower peak <strong>deaths/100k</strong> — higher ICU capacity + earlier vaccination rollout.</li>
+    <li>Both countries: synchronous wave patterns → regional transmission dynamics.</li>
+  </ul>
+  <div class="source-badge">Plot 08 · OWID</div>
+</section>
+
+<!-- ══════════════════════════════════════════ 14 · CONCLUSIONS -->
+<section>
+  <h2>Conclusions</h2>
+  <ul class="conclude">
+    <li><strong>Five distinct waves</strong> driven by variant succession (Alpha → Delta → Omicron); exponential growth rates 0.05 – 0.14 day⁻¹.</li>
+    <li><strong>Vaccination → lower mortality:</strong> CFR fell from ~3.5 % (Wave 1, limited testing) to &lt;0.2 % after booster rollout.</li>
+    <li><strong>Omicron (Wave 5)</strong>: highest incidence ever recorded, yet lowest CFR — consistent with partial immune escape but reduced severity.</li>
+    <li><strong>Excess mortality</strong> peaked in Wave 2 winter; largely absent during Omicron, confirming vaccination impact.</li>
+    <li><strong>Log-linear regression</strong> confirms exponential growth phase in every wave; Holt-Winters forecasts stayed within 90 % CI in both test periods.</li>
+    <li><strong>Germany vs Poland</strong>: broadly synchronous epidemic curves; Germany maintained lower peak death rates throughout.</li>
+  </ul>
+  <p style="font-size:0.58em; color:var(--muted); margin-top:0.6em;">
+    Data: Our World in Data · ECDC · Code: reproducible Python in <code>scripts/</code>
+  </p>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: "none",
+    transitionSpeed: "default",
+    slideNumber: "c/t",
+    controls: true,
+    progress: true,
+    center: false,
+    /* Scales cleanly from 1024×768 to 1920×1200 */
+    width: 1280,
+    height: 800,
+    margin: 0.05,
+    minScale: 0.20,
+    maxScale: 2.00,
+    plugins: [],
+  });
+</script>
+</body>
+</html>
