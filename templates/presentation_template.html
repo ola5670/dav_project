@@ -135,15 +135,9 @@
     }
 
     /* ── Plot containers ───────────────────────────────────── */
-    .plot-full img {
-      max-height: 78vh;
-      width: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+    .plot-full img,
     .plot-tall img {
-      max-height: 80vh;
+      max-height: 66vh;
       width: auto;
       display: block;
       margin: 0 auto;
@@ -151,7 +145,7 @@
 
     .plotly-frame {
       width: 100%;
-      height: 78vh;
+      height: 66vh;
       overflow: hidden;
     }
 
@@ -373,9 +367,8 @@
       <!-- ══════════════════════════════════════════ 6 · CFR -->
       <section>
         <h2>Case Fatality Rate over Time</h2>
-        <div style="text-align:center;">
-          <img src="figures/plot03_cfr_over_time.png" alt="Case fatality rate"
-            style="max-height:76vh; width:auto; display:inline-block;" />
+        <div class="plot-full">
+          <img src="figures/plot03_cfr_over_time.png" alt="Case fatality rate" />
         </div>
         <p style="font-size:0.60em; color:var(--muted); margin:0.2em 0 0;">
           CFR peaked ~3.5 % in Wave 1 (limited testing capacity) and fell below 0.2 % after booster rollout.
@@ -386,9 +379,8 @@
       <!-- ══════════════════════════════════════════ 7 · EXCESS MORTALITY -->
       <section>
         <h2>Excess Mortality</h2>
-        <div style="text-align:center;">
-          <img src="figures/plot09_excess_mortality.png" alt="Excess mortality"
-            style="max-height:78vh; width:auto; display:inline-block;" />
+        <div class="plot-full">
+          <img src="figures/plot09_excess_mortality.png" alt="Excess mortality" />
         </div>
         <p style="font-size:0.58em; color:var(--muted); margin:0.15em 0 0; text-align:left;">
           Peak: Wave 2 winter 2020/21. Largely absent during Omicron — confirming vaccination impact. &nbsp;·&nbsp;
@@ -396,7 +388,7 @@
         </p>
       </section>
 
-      <!-- ══════════════════════════════════════════ 7 · VACCINATION (interactive) -->
+      <!-- ══════════════════════════════════════════ 8 · VACCINATION -->
       <section>
         <h2>Vaccination Rollout</h2>
         <div class="plot-full"><img src="figures/plot04_vaccination_progress.png" alt="Vaccination progress" /></div>
@@ -409,7 +401,13 @@
       <!-- ══════════════════════════════════════════ 8 · VARIANTS -->
       <section>
         <h2>Variant Dominance (ECDC Surveillance)</h2>
+        {% if interactive_plot10 %}
+        <div class="plotly-frame">
+          <iframe srcdoc="{{ interactive_plot10 | e }}" scrolling="no"></iframe>
+        </div>
+        {% else %}
         <div class="plot-tall"><img src="figures/plot10_variants_heatmap.png" alt="Variant dominance stackplot" /></div>
+        {% endif %}
         <div class="source-badge">Plot 10 · ECDC</div>
       </section>
 
@@ -457,7 +455,13 @@
         <h2>Wave Growth Speed — Doubling Time</h2>
         <p style="font-size:0.44em; color:var(--muted); margin:0 0 0.3em 0; text-align:right;">Plot 06 ·
           scipy.stats.linregress</p>
+        {% if interactive_plot06 %}
+        <div class="plotly-frame">
+          <iframe srcdoc="{{ interactive_plot06 | e }}" scrolling="no"></iframe>
+        </div>
+        {% else %}
         <div class="plot-full"><img src="figures/plot06_regression_trend.png" alt="Doubling time per wave" /></div>
+        {% endif %}
         <p style="font-size:0.60em; color:var(--muted); margin:0.4em 0 0;">
           Shorter bar = faster-spreading wave. Reference lines: 7 d (very fast) · 14 d (moderate). OLS on log(new
           cases).
@@ -467,9 +471,8 @@
       <!-- ══════════════════════════════════════════ 11 · FORECAST -->
       <section>
         <h2>Holt-Winters Short-Term Forecast</h2>
-        <div style="text-align:center;">
-          <img src="figures/plot07_forecast_two_periods.png" alt="Forecast"
-            style="max-height:66vh; width:auto; display:inline-block;" />
+        <div class="plot-full">
+          <img src="figures/plot07_forecast_two_periods.png" alt="Forecast" />
         </div>
         <p style="font-size:0.60em; color:var(--muted); margin:0.3em 0 0;">
           Shaded band = <strong>90 % prediction interval</strong> (σ × √k). Observed line after
@@ -482,8 +485,13 @@
       <!-- ══════════════════════════════════════════ 12 · GERMANY vs POLAND -->
       <section>
         <h2>Germany vs Poland — 7-day Incidence &amp; Deaths per 100k</h2>
-        <div style="text-align:center;"><img src="figures/plot08_germany_poland.png" alt="Germany vs Poland"
-            style="max-height:60vh; width:auto; display:inline-block;" /></div>
+        {% if interactive_plot08 %}
+        <div class="plotly-frame">
+          <iframe srcdoc="{{ interactive_plot08 | e }}" scrolling="no"></iframe>
+        </div>
+        {% else %}
+        <div class="plot-full"><img src="figures/plot08_germany_poland.png" alt="Germany vs Poland" /></div>
+        {% endif %}
         <ul style="margin:0.25em 0 0; font-size:0.62em; line-height:1.35;">
           <li>Germany: consistently lower peak <strong>deaths/100k</strong> — higher ICU capacity + earlier vaccination
             rollout.</li>
@@ -496,7 +504,7 @@
       <section>
         <h2>Conclusions</h2>
         <ul class="conclude">
-          <li><strong>Five distinct waves</strong> driven by variant succession (Alpha → Delta → Omicron); exponential
+          <li><strong>Five distinct waves</strong> driven by variant succession (Wild-type → Alpha → Delta → Omicron); exponential
             growth rates 0.05 – 0.14 day⁻¹.</li>
           <li><strong>Vaccination → lower mortality:</strong> CFR fell from ~3.5 % (Wave 1, limited testing) to &lt;0.2
             % after booster rollout.</li>
@@ -504,7 +512,7 @@
             partial immune escape but reduced severity.</li>
           <li><strong>Excess mortality</strong> peaked in Wave 2 winter; largely absent during Omicron, confirming
             vaccination impact.</li>
-          <li><strong>Log-linear regression</strong> confirms exponential growth phase in every wave; Holt-Winters
+          <li><strong>Log-linear regression</strong> confirms exponential growth phase in all identified growth periods; Holt-Winters
             forecasts stayed within 90 % CI in both test periods.</li>
           <li><strong>Germany vs Poland</strong>: broadly synchronous epidemic curves; Germany maintained lower peak
             death rates throughout.</li>

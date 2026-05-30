@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import pandas as pd
 

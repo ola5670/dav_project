@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -59,7 +55,7 @@ def main() -> None:
     add_event_annotations(ax, ymax_fraction=0.94)
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     ax.set_ylim(*axis_limits["incidence_per_100k"])
-    ax.set_ylabel("Cases per 100,000 people")
+    ax.set_ylabel("7-day incidence per 100 000")
     ax.set_xlabel("Date")
     ax.yaxis.set_major_formatter(number_formatter())
     peaks = df.nlargest(3, "incidence_7day_per_100k").sort_values("date")

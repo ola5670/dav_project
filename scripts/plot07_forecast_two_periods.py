@@ -8,10 +8,6 @@ statsmodels ExponentialSmoothing (Holt-Winters) is used because it is
 more robust to the data gaps present in the COVID time series than ARIMA.
 A 90 % confidence interval is estimated from the in-sample residual std.
 """
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import warnings
 
 import matplotlib.dates as mdates
@@ -77,11 +73,11 @@ def main() -> None:
         y=1.01,
     )
 
-    colors = [palette["cases"], palette["deaths"]]
+    colors = [palette["cases"], palette["vaccination_alt"]]
 
     for ax, (label, train_start, train_end), color in zip(axes, PERIODS, colors):
         mask_train = (df["date"] >= train_start) & (df["date"] <= train_end)
-        train_df = df.loc[mask_train, ["date", "new_cases_7day"]].dropna()
+        train_df = df.loc[mask_train, ["date", "incidence_7day_per_100k"]].dropna()
 
         if len(train_df) < 14:
             ax.text(0.5, 0.5, "Insufficient data", ha="center", va="center",
@@ -89,10 +85,9 @@ def main() -> None:
             apply_style(ax, label)
             continue
 
-        series = train_df.set_index("date")["new_cases_7day"]
+        series = train_df.set_index("date")["incidence_7day_per_100k"]
         series.index = pd.DatetimeIndex(series.index)
 
-        # Future date index
         last_train = series.index[-1]
         future_idx = pd.date_range(
             last_train + pd.Timedelta(days=1), periods=FORECAST_HORIZON, freq="D"
@@ -103,15 +98,13 @@ def main() -> None:
         lower.index = future_idx
         upper.index = future_idx
 
-        # Show a bit of actual data after the training window for reference
         actual_end = pd.Timestamp(train_end) + pd.Timedelta(days=FORECAST_HORIZON + 10)
         mask_context = (df["date"] >= pd.Timestamp(train_start) - pd.Timedelta(days=14)) & \
                        (df["date"] <= actual_end)
-        ctx = df.loc[mask_context, ["date", "new_cases_7day"]].dropna()
+        ctx = df.loc[mask_context, ["date", "incidence_7day_per_100k"]].dropna()
 
-        # Plot actual (context)
         ax.plot(
-            ctx["date"], ctx["new_cases_7day"],
+            ctx["date"], ctx["incidence_7day_per_100k"],
             color=palette["neutral"], linewidth=2.2, label="Observed", zorder=3
         )
 
@@ -136,7 +129,7 @@ def main() -> None:
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
         plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
-        ax.set_ylabel("7-day smoothed new cases")
+        ax.set_ylabel("7-day incidence per 100 000")
         ax.legend(fontsize=13, loc="upper left")
 
     fig.tight_layout()

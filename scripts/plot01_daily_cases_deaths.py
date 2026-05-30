@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -34,7 +30,7 @@ def main() -> None:
     fig, axes = plt.subplots(2, 1, figsize=(18, 12), sharex=True)
     fig.suptitle(
         "COVID-19 Cases and Deaths in Germany",
-        fontsize=32,
+        fontsize=30,
         fontweight="bold",
         color=palette["slate"],
         y=0.99,
@@ -64,7 +60,7 @@ def main() -> None:
         )
     ax.set_ylim(*axis_limits["incidence_per_100k"])
     add_event_annotations(ax, ymax_fraction=0.95)
-    ax.set_ylabel("Cases per 100,000 people")
+    ax.set_ylabel("7-day incidence per 100 000")
     ax.yaxis.set_major_formatter(number_formatter())
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     peak_cases = df.loc[df["incidence_7day_per_100k"].idxmax()]
@@ -112,7 +108,7 @@ def main() -> None:
         )
     ax.set_ylim(*axis_limits["deaths_per_100k"])
     add_event_annotations(ax, ymax_fraction=0.95)
-    ax.set_ylabel("Deaths per 100,000 people")
+    ax.set_ylabel("7-day deaths per 100 000")
     ax.set_xlabel("Date")
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     peak_deaths = df.loc[df["deaths_7day_per_100k"].idxmax()]

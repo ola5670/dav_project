@@ -5,10 +5,6 @@ OLS regression on log(new_cases_7day) to estimate the exponential growth
 rate.  The doubling time T₂ = log(2) / slope is shown as a horizontal
 bar chart — shorter bar means faster-spreading wave.
 """
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -115,11 +111,10 @@ def main() -> None:
     slopes      = [r["slope"]    for r in results]
     colors      = [WAVE_COLORS[i % len(WAVE_COLORS)] for i in range(len(results))]
 
-    # ── static matplotlib ────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(14, max(5, len(results) * 1.4)))
+    fig, ax = plt.subplots(figsize=(18, max(7, len(results) * 1.4)))
     fig.suptitle(
         "How fast did each wave grow?\nDoubling time of 7-day case count",
-        fontsize=26,
+        fontsize=30,
         fontweight="bold",
         color=palette["slate"],
         y=1.03,
@@ -147,12 +142,11 @@ def main() -> None:
         )
 
     # Reference lines
-    ax.axvline(REF_FAST,     color="#D55E00", linestyle="--", linewidth=1.6)
+    ax.axvline(REF_FAST,     color="#E69F00", linestyle="--", linewidth=1.6)
     ax.axvline(REF_MODERATE, color="#009E73", linestyle="--", linewidth=1.6)
 
-    # Labels in the top-right corner (axes coordinates)
     ax.text(0.99, 0.98, f"── {REF_FAST} days (very fast)",
-            transform=ax.transAxes, color="#D55E00",
+            transform=ax.transAxes, color="#E69F00",
             fontsize=12, va="top", ha="right")
     ax.text(0.99, 0.88, f"── {REF_MODERATE} days (moderate)",
             transform=ax.transAxes, color="#009E73",
@@ -165,7 +159,6 @@ def main() -> None:
     fig.tight_layout()
     save_figure(fig, "plot06_regression_trend")
 
-    # ── interactive Plotly ───────────────────────────────────────────────────
     _build_plotly(results)
 
 
@@ -213,13 +206,16 @@ def _build_plotly(results: list[dict]) -> None:
 
     # Reference lines
     x_max = max(doublings) * 1.22
-    for val, label, color in [
-        (REF_FAST,     f"{REF_FAST} d — very fast",  "#D55E00"),
-        (REF_MODERATE, f"{REF_MODERATE} d — moderate", "#009E73"),
-    ]:
+    for (val, label, color), y_pos in zip(
+        [
+            (REF_FAST,     f"{REF_FAST} d — very fast",  "#E69F00"),
+            (REF_MODERATE, f"{REF_MODERATE} d — moderate", "#009E73"),
+        ],
+        [1.08, 1.02],
+    ):
         fig.add_vline(x=val, line_dash="dash", line_color=color, line_width=1.8)
         fig.add_annotation(
-            x=val, y=1.02, yref="paper",
+            x=val, y=y_pos, yref="paper",
             text=label, showarrow=False,
             font={"size": 12, "color": color},
             xanchor="left",

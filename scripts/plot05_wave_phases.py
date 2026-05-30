@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -79,7 +75,7 @@ def main() -> None:
         "Incidence by pandemic phase",
         date_axis=False,
     )
-    ax.set_xlabel("Seven-day incidence per 100,000 people")
+    ax.set_xlabel("7-day incidence per 100 000")
     ax.set_ylabel("Pandemic phase")
     ax.set_xlim(*axis_limits["incidence_per_100k"])
     fig.tight_layout()

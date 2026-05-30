@@ -5,24 +5,9 @@ saved as a self-contained HTML file for the presentation, and a static
 PNG + SVG via matplotlib for the poster.
 """
 
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
-import sys
-from pathlib import Path
-
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
-from utils import phase_colors, wave_periods, add_event_annotations
-
-# ---------------------------------------------------------------------------
-# Paths (script may be invoked from the repo root or from scripts/)
-# ---------------------------------------------------------------------------
-_script_dir = Path(__file__).resolve().parent
-_project_root = _script_dir.parent
-sys.path.insert(0, str(_script_dir))
 
 from utils import (
     add_event_annotations,
@@ -88,9 +73,6 @@ def _build_plotly(df: pd.DataFrame) -> None:
     metric = "incidence_7day_per_100k"
     metric_label = "7-day incidence per 100 000"
 
-    # Start from first wave (Mar 2020) so the chart opens with real data
-    import pandas as _pd
-
     df_anim = df[df["date"] >= "2020-03-01"].copy()
 
     # Sample every 7 days → ~240 frames for 2020-2024
@@ -112,47 +94,103 @@ def _build_plotly(df: pd.DataFrame) -> None:
         labels = [f"  {v:.1f}" for v in values]
         return countries, values, colors, labels
 
-    # ── animation frames ─────────────────────────────────────────────────────
+    # All-time peak per country
+    peaks = {}
+    for country in COUNTRY_COLORS:
+        sub = df_anim[df_anim["location"] == country]
+        if sub[metric].notna().any():
+            peak_idx = sub[metric].idxmax()
+            peaks[country] = {
+                "value": float(sub.loc[peak_idx, metric]),
+                "date": str(sub.loc[peak_idx, "date"])[:10],
+            }
+    peak_dates = {c: info["date"] for c, info in peaks.items()}
+
+    peak_annotations_by_country = {
+        c: {
+            "x": 0.99,
+            "y": 0.99 - i * 0.30,
+            "xref": "paper",
+            "yref": "paper",
+            "xanchor": "right",
+            "yanchor": "top",
+            "text": (
+                f"<b>★ Peak {c}</b><br>"
+                f"{info['value']:.0f} per 100 000<br>"
+                f"<span style='font-size:10px'>{info['date']}</span>"
+            ),
+            "font": {"size": 12, "color": COUNTRY_COLORS[c]},
+            "showarrow": False,
+            "bgcolor": "rgba(255,255,255,0.92)",
+            "borderpad": 5,
+            "bordercolor": COUNTRY_COLORS[c],
+            "borderwidth": 2,
+        }
+        for i, (c, info) in enumerate(peaks.items())
+    }
+
     frames = []
     for date in sampled:
         fc, fv, fcolors, flabels = _frame_data(date)
         date_str = str(date)[:10]
-        frames.append(
-            go.Frame(
-                data=[
-                    go.Bar(
-                        x=fv,
-                        y=fc,
-                        orientation="h",
-                        marker_color=fcolors,
-                        text=flabels,
-                        textposition="outside",
-                        cliponaxis=False,
-                        hovertemplate="<b>%{y}</b><br>"
-                        + metric_label
-                        + ": %{x:.1f}<extra></extra>",
-                    )
-                ],
-                name=date_str,
-                layout=go.Layout(
-                    annotations=[
-                        {
-                            "x": 0.99,
-                            "y": 0.08,
-                            "xref": "paper",
-                            "yref": "paper",
-                            "xanchor": "right",
-                            "yanchor": "bottom",
-                            "text": f"<b>{date_str}</b>",
-                            "font": {"size": 20, "color": "#9CA3AF"},
-                            "showarrow": False,
-                        }
-                    ]
-                ),
-            )
-        )
 
-    # ── initial state = first frame ──────────────────────────────────────────
+        bar_line_colors = [
+            "#FFD700" if peak_dates.get(c) == date_str else "white"
+            for c in fc
+        ]
+        bar_line_widths = [
+            3 if peak_dates.get(c) == date_str else 0.5
+            for c in fc
+        ]
+
+        is_peak = any(info["date"] == date_str for info in peaks.values())
+        repeats = 17 if is_peak else 1
+
+        peak_annots = [
+            peak_annotations_by_country[c]
+            for c, info in peaks.items()
+            if info["date"] == date_str
+        ]
+
+        for r in range(repeats):
+            frame_name = date_str if r == 0 else f"{date_str}_{r}"
+            frames.append(
+                go.Frame(
+                    data=[
+                        go.Bar(
+                            x=fv,
+                            y=fc,
+                            orientation="h",
+                            marker_color=fcolors,
+                            marker_line_color=bar_line_colors,
+                            marker_line_width=bar_line_widths,
+                            text=flabels,
+                            textposition="outside",
+                            cliponaxis=False,
+                            hovertemplate="<b>%{y}</b><br>"
+                            + metric_label
+                            + ": %{x:.1f}<extra></extra>",
+                        )
+                    ],
+                    name=frame_name,
+                    layout=go.Layout(
+                        annotations=[
+                            {
+                                "x": 0.99,
+                                "y": 0.08,
+                                "xref": "paper",
+                                "yref": "paper",
+                                "xanchor": "right",
+                                "yanchor": "bottom",
+                                "text": f"<b>{date_str}</b>",
+                                "font": {"size": 20, "color": "#9CA3AF"},
+                                "showarrow": False,
+                            }
+                        ] + peak_annots
+                    ),
+                )
+            )
+
     init_countries, init_values, init_colors, init_labels = _frame_data(sampled[0])
     init_date_str = str(sampled[0])[:10]
 
@@ -163,6 +201,8 @@ def _build_plotly(df: pd.DataFrame) -> None:
                 y=init_countries,
                 orientation="h",
                 marker_color=init_colors,
+                marker_line_color="white",
+                marker_line_width=0.5,
                 text=init_labels,
                 textposition="outside",
                 cliponaxis=False,
@@ -175,21 +215,24 @@ def _build_plotly(df: pd.DataFrame) -> None:
     )
 
     # Slider: show label only every 8th step (~every 2 months) to avoid overlap
-    slider_steps = [
-        {
-            "args": [
-                [f.name],
-                {
-                    "frame": {"duration": 120, "redraw": True},
-                    "mode": "immediate",
-                    "transition": {"duration": 80},
-                },
-            ],
-            "label": f.name[:7] if i % 26 == 0 else "",
-            "method": "animate",
-        }
-        for i, f in enumerate(frames)
-    ]
+    # Only one slider step per unique date — repeated frames share the same step,
+    # so the slider dot stays still during a freeze.
+    unique_steps = []
+    for f in frames:
+        if "_" not in f.name:  # r=0 frames have plain "YYYY-MM-DD" names
+            unique_steps.append({
+                "args": [
+                    [f.name],
+                    {
+                        "frame": {"duration": 120, "redraw": True},
+                        "mode": "immediate",
+                        "transition": {"duration": 80},
+                    },
+                ],
+                "label": f.name[:7] if len(unique_steps) % 26 == 0 else "",
+                "method": "animate",
+            })
+    slider_steps = unique_steps
 
     fig.update_layout(
         title={
@@ -302,7 +345,7 @@ def _build_static(df: pd.DataFrame) -> None:
     fig, axes = plt.subplots(2, 1, figsize=(18, 12), sharex=True)
     fig.suptitle(
         "COVID-19: Germany vs Poland (2020-2024)",
-        fontsize=32,
+        fontsize=30,
         fontweight="bold",
         color=palette["slate"],
         y=1.01,
@@ -311,12 +354,12 @@ def _build_static(df: pd.DataFrame) -> None:
     metrics = [
         (
             "incidence_7day_per_100k",
-            "7-day incidence per 100k",
+            "7-day incidence per 100 000",
             axis_limits["incidence_per_100k"],
         ),
         (
             "deaths_7day_per_100k",
-            "7-day deaths per 100k",
+            "7-day deaths per 100 000",
             axis_limits["deaths_per_100k"],
         ),
     ]

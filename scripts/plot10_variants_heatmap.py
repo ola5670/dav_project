@@ -1,66 +1,59 @@
 """Plot 10 – Variant dominance stackplot for Germany.
 
 Uses the ECDC variant surveillance CSV (data/raw/ecdc_variants.csv).
-Variants with < 2 % peak share are grouped into "Other".
-The result is a stacked area chart showing the weekly percentage of each
-variant among sequenced samples.
+Variants are grouped by WHO variant family (Alpha, Beta/Gamma, Delta,
+Omicron sub-lineages) to keep the chart readable.
 """
-
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
 
-from utils import apply_style, data_raw, palette, save_figure
+from utils import apply_style, data_raw, figures_dir, save_figure, save_plotly_html
 
-# Colour palette for major variants (WHO Greek-letter / Pango lineage)
-VARIANT_COLORS = {
-    "B.1.1.7": "#0072B2",  # Alpha
-    "B.1.351": "#E69F00",  # Beta
-    "P.1": "#009E73",  # Gamma
-    "B.1.617.2": "#D55E00",  # Delta
-    "B.1.1.529": "#CC79A7",  # Omicron (root)
-    "BA.1": "#56B4E9",  # Omicron BA.1
-    "BA.2": "#F0E442",  # Omicron BA.2
-    "BA.4": "#999999",  # Omicron BA.4
-    "BA.5": "#0072B2",  # Omicron BA.5 (reuse hue)
-    "BA.2.75": "#D55E00",
-    "BA.2.86": "#009E73",
-    "BQ.1": "#E69F00",
-    "XBB.1.5-like": "#CC79A7",
-    "XBB.1.5-like+F456L": "#56B4E9",
-    "Other": "#CCCCCC",
+INTERACTIVE_OUT = figures_dir / "plot10_variants_interactive.html"
+
+VARIANT_GROUPS = {
+    "Alpha (B.1.1.7)":          ["B.1.1.7"],
+    "Beta / Gamma":              ["B.1.351", "P.1"],
+    "Delta (B.1.617.2)":        ["B.1.617.2"],
+    "Omicron BA.1":              ["B.1.1.529", "BA.1"],
+    "Omicron BA.2":              ["BA.2", "BA.2.75", "BA.2.86"],
+    "Omicron BA.4 / BA.5":      ["BA.4", "BA.5"],
+    "Late Omicron (BQ / XBB)":  ["BQ.1", "XBB.1.5-like", "XBB.1.5-like+F456L"],
 }
 
-MIN_PEAK_SHARE = 2.0  # variants below this max share are folded into Other
+GROUP_COLORS = {
+    "Alpha (B.1.1.7)":          "#5B9EC9",   # muted blue
+    "Beta / Gamma":              "#E8B96A",   # muted amber
+    "Delta (B.1.617.2)":        "#E07D4B",   # muted orange
+    "Omicron BA.1":              "#D49BBF",   # muted pink
+    "Omicron BA.2":              "#4AAF96",   # muted green
+    "Omicron BA.4 / BA.5":      "#84C8F0",   # muted light blue
+    "Late Omicron (BQ / XBB)":  "#C8C068",   # muted olive-yellow
+    "Other":                     "#C8C8C8",   # light gray
+}
 
 
 def _parse_week(year_week: pd.Series) -> pd.Series:
-    """Convert 'YYYY-WW' strings to Monday date of that ISO week.
-
-    Args:
-        year_week: Series of strings in 'YYYY-WW' format.
-
-    Returns:
-        Series of pandas Timestamps.
-    """
+    """Convert 'YYYY-WW' strings to Monday date of that ISO week."""
     return pd.to_datetime(year_week + "-1", format="%Y-%W-%w")
 
 
-def main() -> None:
-    """Generate the variant dominance stackplot."""
+def _prepare_data() -> tuple[pd.DataFrame, list[str], list[str]] | None:
+    """Load and aggregate ECDC variant data into WHO family groups.
+
+    Returns:
+        Tuple of (group_df, col_order, colors) or None if data is missing.
+    """
     path = data_raw / "ecdc_variants.csv"
     if not path.exists():
         print(f"{path} not found — skipping plot10.")
-        return
+        return None
 
     raw = pd.read_csv(path)
     de = raw[raw["country"] == "Germany"].copy()
 
-    # Keep GISAID source (more complete) where both exist
     if "GISAID" in de["source"].values:
         de = de[de["source"] == "GISAID"]
 
@@ -68,7 +61,6 @@ def main() -> None:
     de["week_date"] = _parse_week(de["year_week"])
     de = de[de["week_date"] >= "2020-12-01"].copy()
 
-    # Pivot to wide format: rows = weeks, cols = variants
     pivot = de.pivot_table(
         index="week_date",
         columns="variant",
@@ -76,39 +68,43 @@ def main() -> None:
         aggfunc="sum",
     ).fillna(0)
 
-    # Drop the generic "Other" column temporarily – we'll recompute it
     if "Other" in pivot.columns:
         pivot = pivot.drop(columns=["Other"])
 
-    # Remove variants whose peak share never reaches MIN_PEAK_SHARE
-    peak = pivot.max(axis=0)
-    major = peak[peak >= MIN_PEAK_SHARE].index.tolist()
-    minor_sum = pivot.drop(columns=major, errors="ignore").sum(axis=1)
+    group_df = pd.DataFrame(index=pivot.index)
+    assigned = set()
+    for group_name, members in VARIANT_GROUPS.items():
+        cols = [c for c in members if c in pivot.columns]
+        if cols:
+            group_df[group_name] = pivot[cols].sum(axis=1)
+            assigned.update(cols)
+        else:
+            group_df[group_name] = 0.0
 
-    plot_df = pivot[major].copy()
-    plot_df["Other"] = minor_sum
+    remaining = [c for c in pivot.columns if c not in assigned]
+    group_df["Other"] = pivot[remaining].sum(axis=1) if remaining else 0.0
 
-    # Normalise rows to 100 % (deal with rounding / missing weeks)
-    row_sum = plot_df.sum(axis=1).replace(0, float("nan"))
-    plot_df = plot_df.div(row_sum, axis=0).fillna(0) * 100
+    row_sum = group_df.sum(axis=1).replace(0, float("nan"))
+    group_df = group_df.div(row_sum, axis=0).fillna(0) * 100
+    group_df = group_df.loc[:, group_df.max() > 0]
 
-    # Order columns: most-dominant first (by total area), Other last
-    col_order = plot_df.drop(columns="Other").sum().sort_values(
-        ascending=False
-    ).index.tolist() + ["Other"]
-    plot_df = plot_df[col_order]
+    col_order = [g for g in list(VARIANT_GROUPS.keys()) + ["Other"] if g in group_df.columns]
+    colors = [GROUP_COLORS.get(c, "#AAAAAA") for c in col_order]
 
-    colors = [VARIANT_COLORS.get(c, "#AAAAAA") for c in col_order]
+    return group_df, col_order, colors
 
-    fig, ax = plt.subplots(figsize=(18, 9))
+
+def _build_static(group_df: pd.DataFrame, col_order: list[str], colors: list[str]) -> None:
+    """Save a static matplotlib stackplot PNG."""
+    fig, ax = plt.subplots(figsize=(18, 11))
 
     ax.stackplot(
-        plot_df.index,
-        [plot_df[c] for c in col_order],
+        group_df.index,
+        [group_df[c] for c in col_order],
         labels=col_order,
         colors=colors,
         alpha=0.90,
-        linewidth=0.3,
+        linewidth=0.4,
         edgecolor="white",
     )
 
@@ -116,13 +112,12 @@ def main() -> None:
     ax.set_ylabel("Share of sequenced samples (%)")
     ax.set_xlabel("Date")
     ax.set_ylim(0, 100)
-    ax.set_xlim(plot_df.index.min(), plot_df.index.max())
+    ax.set_xlim(group_df.index.min(), group_df.index.max())
 
     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
 
-    # Legend outside to the right
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(
         handles[::-1],
@@ -136,6 +131,106 @@ def main() -> None:
 
     fig.tight_layout()
     save_figure(fig, "plot10_variants_heatmap")
+
+
+SHORT_LABELS = {
+    "Alpha (B.1.1.7)":          "Alpha",
+    "Beta / Gamma":              "Beta/Gamma",
+    "Delta (B.1.617.2)":        "Delta",
+    "Omicron BA.1":              "Omicron BA.1",
+    "Omicron BA.2":              "Omicron BA.2",
+    "Omicron BA.4 / BA.5":      "Omicron BA.4/5",
+    "Late Omicron (BQ / XBB)":  "Late Omicron",
+    "Other":                     "Other",
+}
+
+
+def _build_plotly(group_df: pd.DataFrame, col_order: list[str], colors: list[str]) -> None:
+    """Save an interactive Plotly stacked area chart with on-band labels."""
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        print("plotly not installed – skipping interactive HTML for plot10.")
+        return
+
+    dates = group_df.index.astype(str).tolist()
+    fig = go.Figure()
+
+    for group, color in zip(col_order, colors):
+        values = group_df[group].round(1).tolist()
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=values,
+            name=SHORT_LABELS.get(group, group),
+            stackgroup="one",
+            mode="none",
+            fillcolor=color,
+            line={"width": 0.4, "color": "white"},
+            hovertemplate="<b>%{fullData.name}</b><br>%{x}<br>%{y:.1f} %<extra></extra>",
+        ))
+
+    # Place text labels directly on each band at its widest point
+    dark_bands = {"Late Omicron (BQ / XBB)", "Beta / Gamma", "Omicron BA.4 / BA.5"}
+    cumsum = pd.Series(0.0, index=group_df.index)
+    for group, color in zip(col_order, colors):
+        band_top = cumsum + group_df[group]
+        band_mid = (cumsum + band_top) / 2
+        peak_date = group_df[group].idxmax()
+        peak_pct = group_df.loc[peak_date, group]
+
+        if peak_pct >= 8:
+            text_color = "#111827" if group in dark_bands else "white"
+            fig.add_annotation(
+                x=str(peak_date)[:10],
+                y=float(band_mid.loc[peak_date]),
+                text=SHORT_LABELS.get(group, group),
+                showarrow=False,
+                font={"size": 12, "color": text_color, "family": "DejaVu Sans"},
+                bgcolor="rgba(255,255,255,0.25)",
+                borderpad=3,
+            )
+
+        cumsum = band_top
+
+    fig.update_layout(
+        title={
+            "text": "SARS-CoV-2 variant dominance in Germany",
+            "font": {"size": 17, "color": "#111827"},
+            "x": 0.5,
+            "xanchor": "center",
+        },
+        xaxis={
+            "title": "Date",
+            "showgrid": True,
+            "gridcolor": "#E5E7EB",
+            "tickformat": "%b %Y",
+            "nticks": 16,
+        },
+        yaxis={
+            "title": "Share of sequenced samples (%)",
+            "range": [0, 100],
+            "showgrid": True,
+            "gridcolor": "#E5E7EB",
+        },
+        hovermode="x unified",
+        showlegend=False,
+        height=480,
+        autosize=True,
+        template="plotly_white",
+        margin={"l": 60, "r": 20, "t": 50, "b": 50},
+    )
+
+    save_plotly_html(fig, INTERACTIVE_OUT)
+
+
+def main() -> None:
+    """Generate the variant dominance stackplot (static + interactive)."""
+    result = _prepare_data()
+    if result is None:
+        return
+    group_df, col_order, colors = result
+    _build_static(group_df, col_order, colors)
+    _build_plotly(group_df, col_order, colors)
 
 
 if __name__ == "__main__":

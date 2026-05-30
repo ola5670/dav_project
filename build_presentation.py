@@ -14,10 +14,7 @@ The output is a single static file — no local server required.
 """
 
 from pathlib import Path
-import os
 import sys
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
 
 import pandas as pd
 
@@ -41,16 +38,10 @@ DAILY_CSV = data_processed / "germany_daily.csv"
 
 # Mapping: template variable name -> HTML file in figures/
 INTERACTIVE_FILES = {
-    # "interactive_plot01": figures_dir / "plot01_daily_cases_deaths_interactive.html",
-    # "interactive_plot04": figures_dir / "plot04_vaccination_interactive.html",
     "interactive_plot06": figures_dir / "plot06_regression_interactive.html",
     "interactive_plot08": figures_dir / "plot08_germany_poland_interactive.html",
+    "interactive_plot10": figures_dir / "plot10_variants_interactive.html",
 }
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def _load_stats() -> dict[str, str]:
@@ -119,11 +110,6 @@ def _check_figures() -> list[str]:
         "plot10_variants_heatmap.png",
     ]
     return [name for name in required if not (figures_dir / name).exists()]
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 
 def main() -> None:

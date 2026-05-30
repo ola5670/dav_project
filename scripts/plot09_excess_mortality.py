@@ -5,10 +5,6 @@ Plots the OWID `excess_mortality` column (percentage deviation from the
 bar chart.  A horizontal reference band at ±5 % marks the expected range.
 """
 
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -42,7 +38,7 @@ def main() -> None:
         em["excess_mortality"] >= 0, palette["deaths"], palette["vaccination"]
     )
 
-    fig, ax = plt.subplots(figsize=(18, 9))
+    fig, ax = plt.subplots(figsize=(18, 11))
 
     ax.bar(
         em["date"],

@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -48,7 +44,7 @@ def main() -> None:
         linewidth=3.2,
         label="28-day smoothed CFR",
     )
-    apply_style(ax, "Case Fatality Ratio in Germany")
+    apply_style(ax, "Case Fatality Rate in Germany")
     ymin, ymax = ax.get_ylim()
     for name, (start, end) in wave_periods.items():
         ax.axvspan(
