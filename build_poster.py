@@ -8,7 +8,6 @@ import pandas as pd
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
 
-
 project_root = Path(__file__).resolve().parent
 figures_dir = project_root / "output" / "figures"
 poster_path = project_root / "output" / "poster.pdf"
@@ -18,6 +17,9 @@ colors = {
     "cases": "#0072B2",
     "deaths": "#D55E00",
     "vaccination": "#009E73",
+    "forecast": "#CC79A7",
+    "comparison": "#E69F00",
+    "panel_header": "#1f4e79",
     "ink": "#111827",
     "muted": "#6B7280",
     "rule": "#E5E7EB",
@@ -27,9 +29,39 @@ plots = {
     "overview": "plot01_daily_cases_deaths.png",
     "incidence": "plot02_7day_incidence.png",
     "vaccination": "plot04_vaccination_progress.png",
-    "cfr": "plot03_cfr_over_time.png",
-    "waves": "plot05_wave_phases.png",
+    "comparison": "plot08_germany_poland.png",
+    "excess": "plot09_excess_mortality.png",
+    "variants_forecast": "plot10_variants_heatmap.png",
 }
+
+
+def draw_contained_image(
+    ax: plt.Axes, image, box: tuple[float, float, float, float]
+) -> None:
+    """Draw an image inside an axes-fraction box without stretching it."""
+    left, bottom, width, height = box
+    bbox = ax.get_position()
+    axes_aspect = (bbox.width * ax.figure.get_figwidth()) / (
+        bbox.height * ax.figure.get_figheight()
+    )
+    box_aspect = width * axes_aspect / height
+    image_aspect = image.shape[1] / image.shape[0]
+
+    if image_aspect > box_aspect:
+        draw_width = width
+        draw_height = width * axes_aspect / image_aspect
+    else:
+        draw_height = height
+        draw_width = height * image_aspect / axes_aspect
+
+    x0 = left + (width - draw_width) / 2
+    y0 = bottom + (height - draw_height) / 2
+    ax.imshow(
+        image,
+        extent=[x0, x0 + draw_width, y0, y0 + draw_height],
+        aspect="auto",
+        interpolation="lanczos",
+    )
 
 
 def load_poster_stats() -> dict[str, str]:
@@ -85,23 +117,52 @@ def main() -> None:
     stats = load_poster_stats()
     poster_path.parent.mkdir(parents=True, exist_ok=True)
 
-    fig = plt.figure(figsize=(46.8, 33.1), facecolor="white")
+    fig = plt.figure(figsize=(33.1, 46.8), facecolor="white")
     grid = GridSpec(
-        nrows=14,
+        nrows=26,
         ncols=12,
         figure=fig,
-        height_ratios=[0.95, 0.85, 0.9, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.35],
-        hspace=0.35,
-        wspace=0.32,
+        height_ratios=[
+            1.35,
+            1.35,  # larger header
+            0.82,
+            0.82,  # KPI band
+            0.48,  # KPI-to-plots gap
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,  # row 1
+            0.55,  # row gap
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,  # row 2
+            0.55,  # row gap
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,  # row 3
+            0.20,  # footer
+        ],
+        hspace=0.00,
+        wspace=0.46,
     )
-    fig.subplots_adjust(left=0.035, right=0.975, top=0.965, bottom=0.045)
+    fig.subplots_adjust(left=0.048, right=0.952, top=0.972, bottom=0.045)
 
     header = fig.add_subplot(grid[0:2, :])
     header.axis("off")
     for x, width, color in [
-        (0.00, 0.16, colors["cases"]),
-        (0.17, 0.08, colors["deaths"]),
-        (0.26, 0.08, colors["vaccination"]),
+        (0.00, 0.07, colors["cases"]),
+        (0.08, 0.07, colors["deaths"]),
+        (0.16, 0.07, colors["vaccination"]),
+        (0.24, 0.07, colors["forecast"]),
+        (0.32, 0.07, colors["comparison"]),
     ]:
         header.add_patch(
             Rectangle(
@@ -114,9 +175,9 @@ def main() -> None:
         )
     header.text(
         0.0,
-        0.58,
+        0.64,
         "COVID-19 in Germany",
-        fontsize=72,
+        fontsize=88,
         fontweight="bold",
         color=colors["ink"],
         ha="left",
@@ -124,18 +185,27 @@ def main() -> None:
     )
     header.text(
         0.0,
-        0.20,
-        "Descriptive analysis, pandemic waves and vaccination rollout | 2020-2024",
-        fontsize=25,
+        0.34,
+        "Descriptive & inferential analysis | 2020-2024",
+        fontsize=36,
         color=colors["muted"],
         ha="left",
         va="center",
     )
     header.text(
-        1.0,
-        0.20,
+        0.0,
+        0.13,
+        "Aleksandra Pawłowska · Karolina Winczewska",
+        fontsize=24,
+        color=colors["muted"],
+        ha="left",
+        va="center",
+    )
+    header.text(
+        0.95,
+        0.05,
         "Data source: Our World in Data",
-        fontsize=21,
+        fontsize=20,
         color=colors["muted"],
         ha="right",
         va="center",
@@ -150,12 +220,13 @@ def main() -> None:
             f"to {stats['last_total_date']}",
             colors["cases"],
         ),
-        ("Deaths", stats["deaths"], f"CFR {stats['cfr']}", colors["deaths"]),
+        ("Deaths", stats["deaths"], "confirmed deaths", colors["deaths"]),
+        ("CFR", stats["cfr"], "deaths / confirmed cases", colors["forecast"]),
         (
             "Peak incidence",
             stats["peak_incidence"],
             stats["peak_incidence_date"],
-            colors["cases"],
+            colors["comparison"],
         ),
         (
             "Vaccinated",
@@ -191,45 +262,84 @@ def main() -> None:
         )
         stats_ax.text(
             x + 0.014,
-            0.64,
+            0.68,
             label,
             transform=stats_ax.transAxes,
-            fontsize=16,
+            fontsize=22,
             fontweight="bold",
             color=colors["ink"],
             ha="left",
         )
         stats_ax.text(
             x + 0.014,
-            0.37,
+            0.39,
             value,
             transform=stats_ax.transAxes,
-            fontsize=28,
+            fontsize=35,
             fontweight="bold",
             color=colors["ink"],
             ha="left",
         )
         stats_ax.text(
             x + 0.014,
-            0.17,
+            0.14,
             note,
             transform=stats_ax.transAxes,
-            fontsize=11.5,
+            fontsize=17,
             color=colors["muted"],
             ha="left",
         )
 
     plot_cells = [
-        ("overview", grid[4:9, 0:6]),
-        ("incidence", grid[4:9, 6:12]),
-        ("vaccination", grid[9:13, 0:4]),
-        ("cfr", grid[9:13, 4:8]),
-        ("waves", grid[9:13, 8:12]),
+        ("overview", grid[5:11, 0:6]),
+        ("incidence", grid[5:11, 6:12]),
+        ("vaccination", grid[12:18, 0:6]),
+        ("comparison", grid[12:18, 6:12]),
+        ("excess", grid[19:25, 0:6]),
+        ("variants_forecast", grid[19:25, 6:12]),
     ]
+
+    plot_titles = {
+        "overview": "COVID-19 Cases and Deaths",
+        "incidence": "Seven-Day Incidence",
+        "vaccination": "Vaccination Rollout",
+        "comparison": "Germany vs Poland Comparison",
+        "excess": "Excess Mortality Analysis",
+        "variants_forecast": "Variant Dominance",
+    }
+
     for plot_key, cell in plot_cells:
         ax = fig.add_subplot(cell)
         ax.axis("off")
-        ax.imshow(plt.imread(figures_dir / plots[plot_key]))
+
+        ax.add_patch(
+            Rectangle(
+                (0, 0.94),
+                1,
+                0.06,
+                transform=ax.transAxes,
+                facecolor=colors["panel_header"],
+                edgecolor=colors["panel_header"],
+            )
+        )
+
+        ax.text(
+            0.015,
+            0.965,
+            plot_titles[plot_key],
+            transform=ax.transAxes,
+            fontsize=24,
+            fontweight="bold",
+            color="white",
+            ha="left",
+            va="center",
+        )
+
+        image = plt.imread(figures_dir / plots[plot_key])
+        draw_contained_image(ax, image, (0, 0, 1, 0.92))
+
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
 
     fig.text(
         0.035,
