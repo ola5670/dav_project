@@ -1,41 +1,52 @@
 # COVID-19 in Germany
 
-Student project for the Data Analysis and Visualization course, University of Warsaw, 2026.
+Project analyzes the COVID-19 pandemic in Germany using descriptive statistics, inferential methods, short-term trend prediction, vaccination data, excess mortality, variant surveillance and comparison with Poland.
 
-The project analyzes the COVID-19 pandemic in Germany. Poland is included as comparison-ready processed data for later parts of the project.
+## Final Outputs
 
-## Current Status
+- PDF poster: `output/poster.pdf`
+- HTML presentation: `output/presentation.html`
+- Generated figures: `output/figures/`
+- Raw datasets: `data/raw/`
+- Processed datasets used by plots: `data/processed/`
+- Data cleaning and plot scripts: `scripts/`
 
-Done:
+## Data Sources
 
-- data download/preparation based on the Our World in Data COVID-19 dataset,
-- cleaned Germany dataset and Germany-Poland comparison dataset,
-- five reproducible static plots.
-
-Still to do:
-
-- HTML presentation,
-- interactive and/or animated plots,
-- inferential statistics and trend prediction,
-- extended comparison with Poland,
-- final cleanup before submission.
-
-## Data
-
-Main source used in the current analysis:
 - Our World in Data COVID-19 dataset: <https://raw.githubusercontent.com/owid/covid-19-data/refs/heads/master/public/data/owid-covid-data.csv>
-- OWID codebook: <https://raw.githubusercontent.com/owid/covid-19-data/refs/heads/master/public/data/owid-covid-codebook.csv>
+- OWID COVID-19 codebook: <https://raw.githubusercontent.com/owid/covid-19-data/refs/heads/master/public/data/owid-covid-codebook.csv>
+- ECDC SARS-CoV-2 variants dataset: <https://www.ecdc.europa.eu/en/publications-data/data-virus-variants-covid-19-eueea>
 
-In the downloaded OWID file, Germany daily case/death reporting is available through **15 July 2023**, while cumulative totals continue through **4 August 2024**.
+The main cleaning script, `scripts/01_clean_merge.py`, prepares Germany data and Germany-Poland comparison data. In the OWID file used here, Germany daily case/death reporting is available through 9 July 2023, while cumulative totals continue through 4 August 2024.
 
-Raw data are stored in `data/raw/`. Processed data used by the plots are stored in `data/processed/`. The cleaning script `scripts/01_clean_merge.py` filters the main OWID dataset to Germany (`DEU`) and Poland (`POL`).
+## Plots and Analyses
 
-Additional raw files, not used in the current plots:
-- `owid_weekly_cases_current.csv`: OWID Grapher weekly cases dataset, <https://ourworldindata.org/grapher/weekly-covid-cases.csv>
-- `owid_weekly_deaths_current.csv`: OWID Grapher weekly deaths dataset, <https://ourworldindata.org/grapher/weekly-covid-deaths.csv>
-- `ecdc_variants.csv`: ECDC SARS-CoV-2 variants dataset, <https://www.ecdc.europa.eu/en/publications-data/data-virus-variants-covid-19-eueea>
+The project contains ten reproducible plots:
 
-## How To Run
+1. Daily COVID-19 cases and deaths in Germany.
+2. 7-day incidence per 100,000 people.
+3. Case fatality ratio over time.
+4. Vaccination progress.
+5. Incidence distribution by pandemic phase.
+6. Log-linear regression of epidemic growth and doubling time.
+7. Short-term forecast using Holt-Winters exponential smoothing.
+8. Germany vs Poland comparison.
+9. Excess mortality in Germany.
+10. SARS-CoV-2 variant dominance in Germany.
+
+Selected analyses also generate interactive or animated Plotly files in `output/figures/`.
+
+## Methodology Notes
+
+The analysis uses 7-day rolling averages and rates per 100,000 people to reduce weekday reporting effects and make periods or countries easier to compare.
+
+Negative daily corrections in cases or deaths are clipped only where needed for rolling-rate calculations and summary plots. The case fatality ratio is descriptive and should not be interpreted as infection fatality rate.
+
+Pandemic phases are fixed analysis periods used for visualization and comparison. They are not official German epidemiological definitions.
+
+The regression analysis estimates exponential growth during selected wave-growth periods. The forecast uses Holt-Winters exponential smoothing for short-term prediction and includes prediction intervals.
+
+## How To Reproduce
 
 From the project directory:
 
@@ -43,41 +54,13 @@ From the project directory:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
 python3 scripts/run_part1.py
+python3 scripts/run_part2.py
+python3 build_poster.py
+python3 build_presentation.py
 ```
 
-This regenerates the processed data and static plots.
+This regenerates the processed datasets, all figures, the PDF poster and the HTML presentation.
 
-## Project Structure
 
-```text
-covid19_Germany/
-├── data/
-│   ├── raw/          # source data
-│   └── processed/    # cleaned data used for plots
-├── output/
-│   ├── figures/      # generated plots
-│   └── poster.pdf    # current A0 poster
-├── scripts/          # data cleaning and plotting scripts
-├── build_poster.py   # poster generator
-├── README.md
-└── requirements.txt
-```
-
-## Reproducible Plots
-
-Current static plots:
-
-1. Daily cases and deaths in Germany.
-2. 7-day incidence per 100,000 people.
-3. Case fatality ratio over time.
-4. Vaccination progress.
-5. Incidence distribution by pandemic phase.
-
-Each plot has a corresponding Python script in `scripts/`.
-
-## Notes
-
-- Negative daily case/death corrections are clipped only for rolling incidence and summary plots.
-- CFR is descriptive and is not the same as infection fatality rate.
-- Pandemic phases used in plots are fixed analysis periods, not official German definitions.
