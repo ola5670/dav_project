@@ -8,6 +8,7 @@ import pandas as pd
 from utils import (
     add_event_annotations,
     apply_style,
+    axis_limits,
     load_germany_daily,
     number_formatter,
     palette,
@@ -25,12 +26,11 @@ def main() -> None:
     """
     df = load_germany_daily()
     df = df[
-        (df["date"] >= "2020-02-01")
-        & (df["incidence_7day_per_100k"].notna())
+        (df["date"] >= "2020-02-01") & (df["incidence_7day_per_100k"].notna())
     ].copy()
 
     fig, ax = plt.subplots(figsize=(18, 11))
-    apply_style(ax, "Seven-day incidence in Germany")
+    apply_style(ax, "Seven-Day Incidence in Germany")
 
     ax.fill_between(
         df["date"],
@@ -58,8 +58,8 @@ def main() -> None:
     ax.set_ylim(ymin, ymax)
     add_event_annotations(ax, ymax_fraction=0.94)
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
-    ax.set_ylim(bottom=0)
-    ax.set_ylabel("Cases per 100k")
+    ax.set_ylim(*axis_limits["incidence_per_100k"])
+    ax.set_ylabel("Cases per 100,000 people")
     ax.set_xlabel("Date")
     ax.yaxis.set_major_formatter(number_formatter())
     peaks = df.nlargest(3, "incidence_7day_per_100k").sort_values("date")
@@ -75,7 +75,7 @@ def main() -> None:
         )
     highest = df.loc[df["incidence_7day_per_100k"].idxmax()]
     ax.annotate(
-        f"Omicron peak\n{highest['incidence_7day_per_100k']:.0f} per 100k",
+        f"Omicron peak\n{highest['incidence_7day_per_100k']:.0f} per 100,000",
         xy=(highest["date"], highest["incidence_7day_per_100k"]),
         xytext=(38, -24),
         textcoords="offset points",

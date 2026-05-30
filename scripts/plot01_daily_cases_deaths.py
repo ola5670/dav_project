@@ -8,6 +8,7 @@ import pandas as pd
 from utils import (
     add_event_annotations,
     apply_style,
+    axis_limits,
     load_germany_daily,
     number_formatter,
     palette,
@@ -32,7 +33,7 @@ def main() -> None:
 
     fig, axes = plt.subplots(2, 1, figsize=(18, 12), sharex=True)
     fig.suptitle(
-        "COVID-19 cases and deaths in Germany",
+        "COVID-19 Cases and Deaths in Germany",
         fontsize=32,
         fontweight="bold",
         color=palette["slate"],
@@ -61,9 +62,9 @@ def main() -> None:
             alpha=0.36,
             linewidth=0,
         )
-    ax.set_ylim(ymin, ymax)
+    ax.set_ylim(*axis_limits["incidence_per_100k"])
     add_event_annotations(ax, ymax_fraction=0.95)
-    ax.set_ylabel("Cases per 100k")
+    ax.set_ylabel("Cases per 100,000 people")
     ax.yaxis.set_major_formatter(number_formatter())
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     peak_cases = df.loc[df["incidence_7day_per_100k"].idxmax()]
@@ -109,9 +110,9 @@ def main() -> None:
             alpha=0.36,
             linewidth=0,
         )
-    ax.set_ylim(ymin, ymax)
+    ax.set_ylim(*axis_limits["deaths_per_100k"])
     add_event_annotations(ax, ymax_fraction=0.95)
-    ax.set_ylabel("Deaths per 100k")
+    ax.set_ylabel("Deaths per 100,000 people")
     ax.set_xlabel("Date")
     ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     peak_deaths = df.loc[df["deaths_7day_per_100k"].idxmax()]

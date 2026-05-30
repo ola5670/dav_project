@@ -7,9 +7,9 @@ Usage::
 Runs plot06 through plot10 in order.  Assumes that processed data already
 exists (run scripts/run_part1.py or scripts/01_clean_merge.py first).
 """
+
 import runpy
 from pathlib import Path
-
 
 SCRIPTS = [
     "plot06_regression_trend.py",

@@ -1,7 +1,6 @@
 import runpy
 from pathlib import Path
 
-
 scripts = [
     "01_clean_merge.py",
     "plot01_daily_cases_deaths.py",
@@ -33,4 +32,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

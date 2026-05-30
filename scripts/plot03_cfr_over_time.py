@@ -8,6 +8,7 @@ import pandas as pd
 from utils import (
     add_event_annotations,
     apply_style,
+    axis_limits,
     end_date,
     load_germany_daily,
     palette,
@@ -47,7 +48,7 @@ def main() -> None:
         linewidth=3.2,
         label="28-day smoothed CFR",
     )
-    apply_style(ax, "Case fatality ratio")
+    apply_style(ax, "Case Fatality Ratio in Germany")
     ymin, ymax = ax.get_ylim()
     for name, (start, end) in wave_periods.items():
         ax.axvspan(
@@ -60,9 +61,9 @@ def main() -> None:
     ax.set_ylim(ymin, ymax)
     add_event_annotations(ax, ymax_fraction=0.95)
     ax.set_xlim(pd.Timestamp("2020-04-01"), df["date"].max())
-    ax.set_ylabel("Deaths / confirmed cases")
+    ax.set_ylabel("Case fatality ratio (%)")
     ax.set_xlabel("Date")
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(*axis_limits["cfr_percent"])
     ax.yaxis.set_major_formatter(lambda value, _pos: f"{value:.0f}%")
     ax.legend(loc="upper right", frameon=False, handlelength=2.8)
     fig.subplots_adjust(left=0.10, right=0.96, top=0.88, bottom=0.12)

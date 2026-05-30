@@ -4,6 +4,7 @@ Produces an interactive Plotly figure with two facets (cases / deaths)
 saved as a self-contained HTML file for the presentation, and a static
 PNG + SVG via matplotlib for the poster.
 """
+
 import os
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
@@ -14,6 +15,7 @@ from pathlib import Path
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+from utils import phase_colors, wave_periods, add_event_annotations
 
 # ---------------------------------------------------------------------------
 # Paths (script may be invoked from the repo root or from scripts/)
@@ -23,16 +25,23 @@ _project_root = _script_dir.parent
 sys.path.insert(0, str(_script_dir))
 
 from utils import (
+    add_event_annotations,
     apply_style,
+    axis_limits,
     data_processed,
     figures_dir,
+    number_formatter,
     palette,
+    phase_colors,
     project_root,
     save_figure,
     save_plotly_html,
+    wave_periods,
 )
 
-HTML_OUT = project_root / "output" / "figures" / "plot08_germany_poland_interactive.html"
+HTML_OUT = (
+    project_root / "output" / "figures" / "plot08_germany_poland_interactive.html"
+)
 
 COUNTRY_COLORS = {
     "Germany": palette["cases"],
@@ -81,6 +90,7 @@ def _build_plotly(df: pd.DataFrame) -> None:
 
     # Start from first wave (Mar 2020) so the chart opens with real data
     import pandas as _pd
+
     df_anim = df[df["date"] >= "2020-03-01"].copy()
 
     # Sample every 7 days → ~240 frames for 2020-2024
@@ -95,11 +105,11 @@ def _build_plotly(df: pd.DataFrame) -> None:
     def _frame_data(date):
         sub = df_anim[df_anim["date"] == date][["location", metric]].copy()
         sub[metric] = sub[metric].fillna(0)
-        sub = sub.sort_values(metric, ascending=True)   # ascending → top bar = winner
+        sub = sub.sort_values(metric, ascending=True)  # ascending → top bar = winner
         countries = sub["location"].tolist()
-        values    = sub[metric].tolist()
-        colors    = [bar_colors.get(c, "#888") for c in countries]
-        labels    = [f"  {v:.1f}" for v in values]
+        values = sub[metric].tolist()
+        colors = [bar_colors.get(c, "#888") for c in countries]
+        labels = [f"  {v:.1f}" for v in values]
         return countries, values, colors, labels
 
     # ── animation frames ─────────────────────────────────────────────────────
@@ -107,54 +117,74 @@ def _build_plotly(df: pd.DataFrame) -> None:
     for date in sampled:
         fc, fv, fcolors, flabels = _frame_data(date)
         date_str = str(date)[:10]
-        frames.append(go.Frame(
-            data=[go.Bar(
-                x=fv,
-                y=fc,
-                orientation="h",
-                marker_color=fcolors,
-                text=flabels,
-                textposition="outside",
-                cliponaxis=False,
-                hovertemplate="<b>%{y}</b><br>" + metric_label + ": %{x:.1f}<extra></extra>",
-            )],
-            name=date_str,
-            layout=go.Layout(
-                annotations=[{
-                    "x": 0.99, "y": 0.08,
-                    "xref": "paper", "yref": "paper",
-                    "xanchor": "right", "yanchor": "bottom",
-                    "text": f"<b>{date_str}</b>",
-                    "font": {"size": 20, "color": "#9CA3AF"},
-                    "showarrow": False,
-                }]
-            ),
-        ))
+        frames.append(
+            go.Frame(
+                data=[
+                    go.Bar(
+                        x=fv,
+                        y=fc,
+                        orientation="h",
+                        marker_color=fcolors,
+                        text=flabels,
+                        textposition="outside",
+                        cliponaxis=False,
+                        hovertemplate="<b>%{y}</b><br>"
+                        + metric_label
+                        + ": %{x:.1f}<extra></extra>",
+                    )
+                ],
+                name=date_str,
+                layout=go.Layout(
+                    annotations=[
+                        {
+                            "x": 0.99,
+                            "y": 0.08,
+                            "xref": "paper",
+                            "yref": "paper",
+                            "xanchor": "right",
+                            "yanchor": "bottom",
+                            "text": f"<b>{date_str}</b>",
+                            "font": {"size": 20, "color": "#9CA3AF"},
+                            "showarrow": False,
+                        }
+                    ]
+                ),
+            )
+        )
 
     # ── initial state = first frame ──────────────────────────────────────────
     init_countries, init_values, init_colors, init_labels = _frame_data(sampled[0])
     init_date_str = str(sampled[0])[:10]
 
     fig = go.Figure(
-        data=[go.Bar(
-            x=init_values,
-            y=init_countries,
-            orientation="h",
-            marker_color=init_colors,
-            text=init_labels,
-            textposition="outside",
-            cliponaxis=False,
-            hovertemplate="<b>%{y}</b><br>" + metric_label + ": %{x:.1f}<extra></extra>",
-        )],
+        data=[
+            go.Bar(
+                x=init_values,
+                y=init_countries,
+                orientation="h",
+                marker_color=init_colors,
+                text=init_labels,
+                textposition="outside",
+                cliponaxis=False,
+                hovertemplate="<b>%{y}</b><br>"
+                + metric_label
+                + ": %{x:.1f}<extra></extra>",
+            )
+        ],
         frames=frames,
     )
 
     # Slider: show label only every 8th step (~every 2 months) to avoid overlap
     slider_steps = [
         {
-            "args": [[f.name], {"frame": {"duration": 120, "redraw": True},
-                                "mode": "immediate",
-                                "transition": {"duration": 80}}],
+            "args": [
+                [f.name],
+                {
+                    "frame": {"duration": 120, "redraw": True},
+                    "mode": "immediate",
+                    "transition": {"duration": 80},
+                },
+            ],
             "label": f.name[:7] if i % 26 == 0 else "",
             "method": "animate",
         }
@@ -165,7 +195,8 @@ def _build_plotly(df: pd.DataFrame) -> None:
         title={
             "text": "COVID-19 Race: Germany vs Poland — weekly incidence per 100 000",
             "font": {"size": 17, "color": "#111827"},
-            "x": 0.5, "xanchor": "center",
+            "x": 0.5,
+            "xanchor": "center",
         },
         xaxis={
             "title": metric_label,
@@ -182,60 +213,78 @@ def _build_plotly(df: pd.DataFrame) -> None:
         template="plotly_white",
         showlegend=False,
         margin={"l": 20, "r": 80, "t": 70, "b": 110},
-        annotations=[{
-            "x": 0.99, "y": 0.08,
-            "xref": "paper", "yref": "paper",
-            "xanchor": "right", "yanchor": "bottom",
-            "text": f"<b>{init_date_str}</b>",
-            "font": {"size": 20, "color": "#9CA3AF"},
-            "showarrow": False,
-        }],
-        updatemenus=[{
-            "type": "buttons",
-            "showactive": False,
-            "x": 0.5, "y": -0.28,
-            "xanchor": "center", "yanchor": "top",
-            "buttons": [
-                {
-                    "label": "▶  Play",
-                    "method": "animate",
-                    "args": [None, {
-                        "frame": {"duration": 120, "redraw": True},
-                        "fromcurrent": True,
-                        "transition": {"duration": 80, "easing": "linear"},
-                    }],
-                },
-                {
-                    "label": "⏸  Pause",
-                    "method": "animate",
-                    "args": [[None], {
-                        "frame": {"duration": 0, "redraw": False},
-                        "mode": "immediate",
-                        "transition": {"duration": 0},
-                    }],
-                },
-            ],
-        }],
-        sliders=[{
-            "active": 0,
-            "steps": slider_steps,
-            "x": 0.0, "len": 1.0,
-            "currentvalue": {
-                "prefix": "Week: ",
-                "font": {"size": 12},
+        annotations=[
+            {
+                "x": 0.99,
+                "y": 0.08,
+                "xref": "paper",
+                "yref": "paper",
+                "xanchor": "right",
+                "yanchor": "bottom",
+                "text": f"<b>{init_date_str}</b>",
+                "font": {"size": 20, "color": "#9CA3AF"},
+                "showarrow": False,
+            }
+        ],
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "x": 0.5,
+                "y": -0.28,
                 "xanchor": "center",
-                "visible": True,
-                "offset": 10,
-            },
-            "tickcolor": "white",      # hide individual tick marks
-            "minorticklen": 0,
-            "ticklen": 0,
-            "pad": {"b": 5, "t": 40},
-            "transition": {"duration": 80},
-            "bgcolor": "#E5E7EB",
-            "bordercolor": "#9CA3AF",
-            "borderwidth": 1,
-        }],
+                "yanchor": "top",
+                "buttons": [
+                    {
+                        "label": "▶  Play",
+                        "method": "animate",
+                        "args": [
+                            None,
+                            {
+                                "frame": {"duration": 120, "redraw": True},
+                                "fromcurrent": True,
+                                "transition": {"duration": 80, "easing": "linear"},
+                            },
+                        ],
+                    },
+                    {
+                        "label": "⏸  Pause",
+                        "method": "animate",
+                        "args": [
+                            [None],
+                            {
+                                "frame": {"duration": 0, "redraw": False},
+                                "mode": "immediate",
+                                "transition": {"duration": 0},
+                            },
+                        ],
+                    },
+                ],
+            }
+        ],
+        sliders=[
+            {
+                "active": 0,
+                "steps": slider_steps,
+                "x": 0.0,
+                "len": 1.0,
+                "currentvalue": {
+                    "prefix": "Week: ",
+                    "font": {"size": 12},
+                    "xanchor": "center",
+                    "visible": True,
+                    "offset": 10,
+                },
+                "tickcolor": "white",  # hide individual tick marks
+                "minorticklen": 0,
+                "ticklen": 0,
+                "pad": {"b": 5, "t": 40},
+                "transition": {"duration": 80},
+                "bgcolor": "#E5E7EB",
+                "bordercolor": "#9CA3AF",
+                "borderwidth": 1,
+            }
+        ],
     )
 
     # Ensure the figure starts at frame 0 (first week of first wave)
@@ -245,43 +294,77 @@ def _build_plotly(df: pd.DataFrame) -> None:
 
 
 def _build_static(df: pd.DataFrame) -> None:
-    """Save a static matplotlib PNG + SVG.
+    """Save a static matplotlib PNG.
 
     Args:
         df: Comparison DataFrame with both countries.
     """
     fig, axes = plt.subplots(2, 1, figsize=(18, 12), sharex=True)
     fig.suptitle(
-        "COVID-19: Germany vs Poland (2020–2024)",
-        fontsize=30,
+        "COVID-19: Germany vs Poland (2020-2024)",
+        fontsize=32,
         fontweight="bold",
         color=palette["slate"],
         y=1.01,
     )
 
     metrics = [
-        ("incidence_7day_per_100k", "7-day incidence per 100k"),
-        ("deaths_7day_per_100k", "7-day deaths per 100k"),
+        (
+            "incidence_7day_per_100k",
+            "7-day incidence per 100k",
+            axis_limits["incidence_per_100k"],
+        ),
+        (
+            "deaths_7day_per_100k",
+            "7-day deaths per 100k",
+            axis_limits["deaths_per_100k"],
+        ),
     ]
 
-    for ax, (col, ylabel) in zip(axes, metrics):
+    for ax, (col, ylabel, ylim) in zip(axes, metrics):
+        for name, (start, end) in wave_periods.items():
+            ax.axvspan(
+                pd.Timestamp(start),
+                pd.Timestamp(end),
+                color=phase_colors[name],
+                alpha=0.36,
+                linewidth=0,
+                zorder=0,
+            )
+
         for country, color in COUNTRY_COLORS.items():
             sub = df[df["location"] == country].sort_values("date")
             valid = sub.dropna(subset=[col])
+
             ax.plot(
                 valid["date"],
                 valid[col],
                 color=color,
-                linewidth=2.6,
+                linewidth=3.0,
                 label=country,
+                zorder=3,
+            )
+
+            ax.fill_between(
+                valid["date"],
+                valid[col],
+                0,
+                color=color,
+                alpha=0.16,
+                zorder=2,
             )
 
         apply_style(ax, date_axis=True)
+        ax.set_ylim(*ylim)
+        ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
         ax.set_ylabel(ylabel)
+        ax.yaxis.set_major_formatter(number_formatter())
+        add_event_annotations(ax, ymax_fraction=0.95)
         ax.legend(fontsize=15)
 
     axes[1].set_xlabel("Date")
-    fig.tight_layout()
+
+    fig.tight_layout(rect=[0, 0.035, 1, 0.96], h_pad=3.0)
     save_figure(fig, "plot08_germany_poland")
 
 

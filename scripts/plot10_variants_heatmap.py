@@ -5,6 +5,7 @@ Variants with < 2 % peak share are grouped into "Other".
 The result is a stacked area chart showing the weekly percentage of each
 variant among sequenced samples.
 """
+
 import os
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
@@ -17,24 +18,24 @@ from utils import apply_style, data_raw, palette, save_figure
 
 # Colour palette for major variants (WHO Greek-letter / Pango lineage)
 VARIANT_COLORS = {
-    "B.1.1.7":      "#0072B2",   # Alpha
-    "B.1.351":      "#E69F00",   # Beta
-    "P.1":          "#009E73",   # Gamma
-    "B.1.617.2":    "#D55E00",   # Delta
-    "B.1.1.529":    "#CC79A7",   # Omicron (root)
-    "BA.1":         "#56B4E9",   # Omicron BA.1
-    "BA.2":         "#F0E442",   # Omicron BA.2
-    "BA.4":         "#999999",   # Omicron BA.4
-    "BA.5":         "#0072B2",   # Omicron BA.5 (reuse hue)
-    "BA.2.75":      "#D55E00",
-    "BA.2.86":      "#009E73",
-    "BQ.1":         "#E69F00",
+    "B.1.1.7": "#0072B2",  # Alpha
+    "B.1.351": "#E69F00",  # Beta
+    "P.1": "#009E73",  # Gamma
+    "B.1.617.2": "#D55E00",  # Delta
+    "B.1.1.529": "#CC79A7",  # Omicron (root)
+    "BA.1": "#56B4E9",  # Omicron BA.1
+    "BA.2": "#F0E442",  # Omicron BA.2
+    "BA.4": "#999999",  # Omicron BA.4
+    "BA.5": "#0072B2",  # Omicron BA.5 (reuse hue)
+    "BA.2.75": "#D55E00",
+    "BA.2.86": "#009E73",
+    "BQ.1": "#E69F00",
     "XBB.1.5-like": "#CC79A7",
     "XBB.1.5-like+F456L": "#56B4E9",
-    "Other":        "#CCCCCC",
+    "Other": "#CCCCCC",
 }
 
-MIN_PEAK_SHARE = 2.0   # variants below this max share are folded into Other
+MIN_PEAK_SHARE = 2.0  # variants below this max share are folded into Other
 
 
 def _parse_week(year_week: pd.Series) -> pd.Series:
@@ -92,10 +93,9 @@ def main() -> None:
     plot_df = plot_df.div(row_sum, axis=0).fillna(0) * 100
 
     # Order columns: most-dominant first (by total area), Other last
-    col_order = (
-        plot_df.drop(columns="Other").sum().sort_values(ascending=False).index.tolist()
-        + ["Other"]
-    )
+    col_order = plot_df.drop(columns="Other").sum().sort_values(
+        ascending=False
+    ).index.tolist() + ["Other"]
     plot_df = plot_df[col_order]
 
     colors = [VARIANT_COLORS.get(c, "#AAAAAA") for c in col_order]
@@ -125,7 +125,8 @@ def main() -> None:
     # Legend outside to the right
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(
-        handles[::-1], labels[::-1],
+        handles[::-1],
+        labels[::-1],
         loc="upper left",
         bbox_to_anchor=(1.01, 1.0),
         fontsize=12,

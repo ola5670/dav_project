@@ -8,6 +8,7 @@ import pandas as pd
 from utils import (
     add_event_annotations,
     apply_style,
+    axis_limits,
     end_date,
     load_germany_daily,
     palette,
@@ -52,14 +53,20 @@ def main() -> None:
         linewidth=3.0,
         label="Boosters",
     )
-    apply_style(ax, "Vaccination rollout")
-    add_event_annotations(ax, ymax_fraction=0.94)
+    apply_style(ax, "Vaccination Rollout in Germany")
     ax.set_xlim(pd.Timestamp("2020-12-01"), df["date"].max())
-    ax.set_ylabel("Per 100 people")
+    ax.set_ylim(*axis_limits["percentage"])
+    add_event_annotations(ax, ymax_fraction=0.94)
+    ax.set_ylabel("People per 100 population")
     ax.set_xlabel("Date")
-    ax.set_ylim(0, max(100, df["boosters_per_100"].max() * 1.08))
     milestones = [
-        ("50% initial protocol", "people_fully_vaccinated_per_100", 50, (18, -34), "top"),
+        (
+            "50% initial protocol",
+            "people_fully_vaccinated_per_100",
+            50,
+            (18, -34),
+            "top",
+        ),
         ("Booster rollout", "boosters_per_100", 10, (16, 16), "bottom"),
     ]
     for label, column, threshold, offset, va in milestones:
@@ -83,7 +90,11 @@ def main() -> None:
                 fontsize=13.5,
                 color=palette["slate"],
                 va=va,
-                arrowprops={"arrowstyle": "-", "color": palette["muted"], "linewidth": 1.0},
+                arrowprops={
+                    "arrowstyle": "-",
+                    "color": palette["muted"],
+                    "linewidth": 1.0,
+                },
             )
     ax.legend(loc="upper right", frameon=False, handlelength=2.8)
     fig.subplots_adjust(left=0.10, right=0.96, top=0.88, bottom=0.12)

@@ -71,6 +71,13 @@ palette = {
     "spine": "#9CA3AF",
 }
 
+axis_limits = {
+    "incidence_per_100k": (0, 2000),
+    "deaths_per_100k": (0, 10),
+    "percentage": (0, 100),
+    "cfr_percent": (0, 6),
+}
+
 annotation_events = [
     ("First lockdown", "2020-03-22"),
     ("Vaccine rollout", "2020-12-27"),
@@ -163,6 +170,7 @@ def number_formatter() -> FuncFormatter:
     Returns:
         Matplotlib formatter that writes large values as `k` or `M`.
     """
+
     def _format(value: float, _pos: int) -> str:
         """Format one tick value.
 
@@ -185,7 +193,7 @@ def number_formatter() -> FuncFormatter:
 
 
 def save_figure(fig: plt.Figure, name: str) -> None:
-    """Save a plot as PNG and SVG.
+    """Save a plot as PNG.
 
     Args:
         fig: Matplotlib figure to save.
@@ -193,12 +201,9 @@ def save_figure(fig: plt.Figure, name: str) -> None:
     """
     figures_dir.mkdir(parents=True, exist_ok=True)
     png_path = figures_dir / f"{name}.png"
-    svg_path = figures_dir / f"{name}.svg"
     fig.savefig(png_path, dpi=320, bbox_inches="tight", facecolor="white")
-    fig.savefig(svg_path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved {png_path.relative_to(project_root)}")
-    print(f"Saved {svg_path.relative_to(project_root)}")
 
 
 def save_plotly_html(plotly_fig, path) -> None:

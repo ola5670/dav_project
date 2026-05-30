@@ -5,7 +5,14 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/covid19-germany-matplotlib")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from utils import apply_style, load_germany_daily, palette, save_figure, wave_periods
+from utils import (
+    axis_limits,
+    apply_style,
+    load_germany_daily,
+    palette,
+    save_figure,
+    wave_periods,
+)
 
 
 def main() -> None:
@@ -39,11 +46,22 @@ def main() -> None:
         width=0.26,
         color=palette["cases"],
         showcaps=True,
-        boxprops={"facecolor": palette["cases"], "alpha": 0.72, "edgecolor": palette["slate"], "linewidth": 1.2},
+        boxprops={
+            "facecolor": palette["cases"],
+            "alpha": 0.72,
+            "edgecolor": palette["slate"],
+            "linewidth": 1.2,
+        },
         whiskerprops={"color": palette["slate"], "linewidth": 1.2},
         capprops={"color": palette["slate"], "linewidth": 1.2},
         medianprops={"color": "white", "linewidth": 2.0},
-        flierprops={"marker": "o", "markersize": 3, "markerfacecolor": palette["muted"], "markeredgecolor": "none", "alpha": 0.35},
+        flierprops={
+            "marker": "o",
+            "markersize": 3,
+            "markerfacecolor": palette["muted"],
+            "markeredgecolor": "none",
+            "alpha": 0.35,
+        },
     )
     sns.stripplot(
         data=wave_df.sample(min(len(wave_df), 260), random_state=7),
@@ -61,9 +79,9 @@ def main() -> None:
         "Incidence by pandemic phase",
         date_axis=False,
     )
-    ax.set_xlabel("Seven-day incidence per 100k")
+    ax.set_xlabel("Seven-day incidence per 100,000 people")
     ax.set_ylabel("Pandemic phase")
-    ax.set_xlim(left=0)
+    ax.set_xlim(*axis_limits["incidence_per_100k"])
     fig.tight_layout()
     save_figure(fig, "plot05_wave_phases")
 
