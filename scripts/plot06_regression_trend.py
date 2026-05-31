@@ -1,4 +1,4 @@
-"""Plot 06 – Doubling time per pandemic wave.
+"""Plot 06 - Doubling time per pandemic wave.
 
 For each wave the growth phase (first 40 % of days) is fitted with an
 OLS regression on log(new_cases_7day) to estimate the exponential growth
@@ -27,12 +27,14 @@ INTERACTIVE_OUT = figures_dir / "plot06_regression_interactive.html"
 REGRESSION_WAVES = [k for k in wave_periods if k != "Decline"]
 
 WAVE_COLORS = [
-    "#0072B2",
-    "#D55E00",
-    "#009E73",
-    "#CC79A7",
+    palette["cases"],
+    palette["deaths"],
+    palette["vaccination"],
+    palette["boosters"],
     "#E69F00",
 ]
+
+X_AXIS_LIMIT = 150
 
 # Reference lines
 REF_FAST     = 7   # days  — "very fast"
@@ -113,7 +115,7 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(18, max(7, len(results) * 1.4)))
     fig.suptitle(
-        "How fast did each wave grow?\nDoubling time of 7-day case count",
+        "Doubling Time of 7-Day Case Count",
         fontsize=30,
         fontweight="bold",
         color=palette["slate"],
@@ -142,18 +144,18 @@ def main() -> None:
         )
 
     # Reference lines
-    ax.axvline(REF_FAST,     color="#E69F00", linestyle="--", linewidth=1.6)
-    ax.axvline(REF_MODERATE, color="#009E73", linestyle="--", linewidth=1.6)
+    ax.axvline(REF_FAST, color="#E69F00", linestyle="--", linewidth=1.6)
+    ax.axvline(REF_MODERATE, color=palette["vaccination"], linestyle="--", linewidth=1.6)
 
     ax.text(0.99, 0.98, f"── {REF_FAST} days (very fast)",
             transform=ax.transAxes, color="#E69F00",
             fontsize=12, va="top", ha="right")
     ax.text(0.99, 0.88, f"── {REF_MODERATE} days (moderate)",
-            transform=ax.transAxes, color="#009E73",
+            transform=ax.transAxes, color=palette["vaccination"],
             fontsize=12, va="top", ha="right")
 
-    ax.set_xlabel("Doubling time (days)", fontsize=14)
-    ax.set_xlim(0, max(doublings) * 1.22)
+    ax.set_xlabel("Doubling time (days)")
+    ax.set_xlim(0, X_AXIS_LIMIT)
     ax.invert_yaxis()   # top = earliest wave
     apply_style(ax, date_axis=False)
     fig.tight_layout()
@@ -206,20 +208,20 @@ def _build_plotly(results: list[dict]) -> None:
 
     # Reference lines
     x_max = max(doublings) * 1.22
-    for (val, label, color), y_pos in zip(
-        [
-            (REF_FAST,     f"{REF_FAST} d — very fast",  "#E69F00"),
-            (REF_MODERATE, f"{REF_MODERATE} d — moderate", "#009E73"),
-        ],
-        [1.08, 1.02],
-    ):
+    for val, label, color in [
+        (REF_FAST, f"{REF_FAST} d — very fast", "#E69F00"),
+        (REF_MODERATE, f"{REF_MODERATE} d — moderate", "#009E73"),
+    ]:
         fig.add_vline(x=val, line_dash="dash", line_color=color, line_width=1.8)
-        fig.add_annotation(
-            x=val, y=y_pos, yref="paper",
-            text=label, showarrow=False,
-            font={"size": 12, "color": color},
-            xanchor="left",
-        )
+        fig.add_trace(go.Scatter(
+            x=[None],
+            y=[None],
+            mode="lines",
+            name=label,
+            line={"color": color, "dash": "dash", "width": 1.8},
+            hoverinfo="skip",
+            showlegend=True,
+        ))
 
     fig.update_layout(
         title={
@@ -240,7 +242,17 @@ def _build_plotly(results: list[dict]) -> None:
         height=420,
         autosize=True,
         template="plotly_white",
-        showlegend=False,
+        showlegend=True,
+        legend={
+            "x": 0.98,
+            "y": 0.98,
+            "xanchor": "right",
+            "yanchor": "top",
+            "bgcolor": "rgba(255,255,255,0.82)",
+            "bordercolor": "rgba(229,231,235,0.95)",
+            "borderwidth": 1,
+            "font": {"size": 12, "color": "#374151"},
+        },
         margin={"l": 20, "r": 80, "t": 70, "b": 50},
     )
 

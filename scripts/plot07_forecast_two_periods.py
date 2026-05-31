@@ -1,4 +1,4 @@
-"""Plot 07 – Short-term forecasts using Holt-Winters exponential smoothing.
+"""Plot 07 - Short-term forecasts using Holt-Winters exponential smoothing.
 
 Two separate forecasts are made:
   Period A: training on Wave 2 growth, forecasting 30 days ahead.
@@ -16,7 +16,14 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from utils import apply_style, load_germany_daily, palette, save_figure
+from utils import (
+    apply_style,
+    axis_limits,
+    load_germany_daily,
+    number_formatter,
+    palette,
+    save_figure,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -66,7 +73,7 @@ def main() -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(22, 10))
     fig.suptitle(
-        "Short-term forecasts: Holt-Winters exponential smoothing",
+        "Short-Term Forecasts: Holt-Winters Exponential Smoothing",
         fontsize=30,
         fontweight="bold",
         color=palette["slate"],
@@ -130,6 +137,8 @@ def main() -> None:
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
         plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
         ax.set_ylabel("7-day incidence per 100 000")
+        ax.set_ylim(*axis_limits["incidence_per_100k"])
+        ax.yaxis.set_major_formatter(number_formatter())
         ax.legend(fontsize=13, loc="upper left")
 
     fig.tight_layout()
