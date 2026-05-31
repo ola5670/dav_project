@@ -27,7 +27,7 @@ colors = {
 
 plots = {
     "overview": "plot01_daily_cases_deaths.png",
-    "incidence": "plot02_7day_incidence.png",
+    "incidence": "plot07_forecast_two_periods.png",
     "vaccination": "plot04_vaccination_progress.png",
     "comparison": "plot08_germany_poland.png",
     "excess": "plot09_excess_mortality.png",
@@ -301,7 +301,7 @@ def main() -> None:
 
     plot_titles = {
         "overview": "COVID-19 Cases and Deaths",
-        "incidence": "Seven-Day Incidence",
+        "incidence": "Forecast: Two Pandemic Periods",
         "vaccination": "Vaccination Rollout",
         "comparison": "Germany vs Poland Comparison",
         "excess": "Excess Mortality Analysis",
