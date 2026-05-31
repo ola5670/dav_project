@@ -17,7 +17,7 @@ from utils import (
 def main() -> None:
     """Generate the seven-day incidence figure.
 
-    The plot shows confirmed cases per 100,000 people with pandemic phase bands
+    The plot shows confirmed cases per 100 000 people with pandemic phase bands
     and annotations for the largest observed incidence peak.
     """
     df = load_germany_daily()
@@ -71,7 +71,7 @@ def main() -> None:
         )
     highest = df.loc[df["incidence_7day_per_100k"].idxmax()]
     ax.annotate(
-        f"Omicron peak\n{highest['incidence_7day_per_100k']:.0f} per 100,000",
+        f"Omicron peak\n{highest['incidence_7day_per_100k']:.0f} per 100 000",
         xy=(highest["date"], highest["incidence_7day_per_100k"]),
         xytext=(38, -24),
         textcoords="offset points",

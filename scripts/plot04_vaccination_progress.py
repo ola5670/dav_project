@@ -50,7 +50,7 @@ def main() -> None:
         label="Boosters",
     )
     apply_style(ax, "Vaccination Rollout in Germany")
-    ax.set_xlim(pd.Timestamp("2020-12-01"), df["date"].max())
+    ax.set_xlim(pd.Timestamp("2020-02-01"), df["date"].max())
     ax.set_ylim(*axis_limits["percentage"])
     add_event_annotations(ax, ymax_fraction=0.94)
     ax.set_ylabel("People per 100 population")
