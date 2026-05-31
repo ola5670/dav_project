@@ -144,7 +144,7 @@ def _build_plotly(df: pd.DataFrame) -> None:
         ]
 
         is_peak = any(info["date"] == date_str for info in peaks.values())
-        repeats = 17 if is_peak else 1
+        repeats = 4 if is_peak else 1
 
         peak_annots = [
             peak_annotations_by_country[c]
@@ -154,6 +154,8 @@ def _build_plotly(df: pd.DataFrame) -> None:
 
         for r in range(repeats):
             frame_name = date_str if r == 0 else f"{date_str}_{r}"
+            # Peak annotation shows only in the first freeze frame, then disappears forever
+            frame_annots = peak_annots if r == 0 else []
             frames.append(
                 go.Frame(
                     data=[
@@ -186,7 +188,7 @@ def _build_plotly(df: pd.DataFrame) -> None:
                                 "font": {"size": 20, "color": "#9CA3AF"},
                                 "showarrow": False,
                             }
-                        ] + peak_annots
+                        ] + frame_annots
                     ),
                 )
             )

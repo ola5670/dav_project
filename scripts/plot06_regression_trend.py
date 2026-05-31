@@ -147,12 +147,11 @@ def main() -> None:
     ax.axvline(REF_FAST, color="#E69F00", linestyle="--", linewidth=1.6)
     ax.axvline(REF_MODERATE, color=palette["vaccination"], linestyle="--", linewidth=1.6)
 
-    ax.text(0.99, 0.98, f"── {REF_FAST} days (very fast)",
-            transform=ax.transAxes, color="#E69F00",
-            fontsize=12, va="top", ha="right")
-    ax.text(0.99, 0.88, f"── {REF_MODERATE} days (moderate)",
-            transform=ax.transAxes, color=palette["vaccination"],
-            fontsize=12, va="top", ha="right")
+    xform = ax.get_xaxis_transform()
+    ax.text(REF_FAST, -0.04, str(REF_FAST), transform=xform,
+            ha="center", va="top", fontsize=12, color="#E69F00", fontweight="bold")
+    ax.text(REF_MODERATE, -0.04, str(REF_MODERATE), transform=xform,
+            ha="center", va="top", fontsize=12, color=palette["vaccination"], fontweight="bold")
 
     ax.set_xlabel("Doubling time (days)")
     ax.set_xlim(0, X_AXIS_LIMIT)
@@ -208,20 +207,19 @@ def _build_plotly(results: list[dict]) -> None:
 
     # Reference lines
     x_max = max(doublings) * 1.22
-    for val, label, color in [
-        (REF_FAST, f"{REF_FAST} d — very fast", "#E69F00"),
-        (REF_MODERATE, f"{REF_MODERATE} d — moderate", "#009E73"),
+    for val, color in [
+        (REF_FAST, "#E69F00"),
+        (REF_MODERATE, "#009E73"),
     ]:
         fig.add_vline(x=val, line_dash="dash", line_color=color, line_width=1.8)
-        fig.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
-            mode="lines",
-            name=label,
-            line={"color": color, "dash": "dash", "width": 1.8},
-            hoverinfo="skip",
-            showlegend=True,
-        ))
+        fig.add_annotation(
+            x=val, xref="x",
+            y=0, yref="paper",
+            yanchor="top", yshift=-28,
+            text=f"<b>{val}</b>",
+            showarrow=False,
+            font={"size": 13, "color": color},
+        )
 
     fig.update_layout(
         title={
@@ -242,17 +240,7 @@ def _build_plotly(results: list[dict]) -> None:
         height=420,
         autosize=True,
         template="plotly_white",
-        showlegend=True,
-        legend={
-            "x": 0.98,
-            "y": 0.98,
-            "xanchor": "right",
-            "yanchor": "top",
-            "bgcolor": "rgba(255,255,255,0.82)",
-            "bordercolor": "rgba(229,231,235,0.95)",
-            "borderwidth": 1,
-            "font": {"size": 12, "color": "#374151"},
-        },
+        showlegend=False,
         margin={"l": 20, "r": 80, "t": 70, "b": 50},
     )
 
