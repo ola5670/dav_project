@@ -1,4 +1,4 @@
-"""Plot 08 – Germany vs Poland: 7-day incidence and deaths per 100k.
+"""Plot 08 - Germany vs Poland: 7-day incidence and deaths per 100k.
 
 Produces an interactive Plotly figure with two facets (cases / deaths)
 saved as a self-contained HTML file for the presentation, and a static

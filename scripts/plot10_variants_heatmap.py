@@ -1,4 +1,4 @@
-"""Plot 10 – Variant dominance stackplot for Germany.
+"""Plot 10 - Variant dominance stackplot for Germany.
 
 Uses the ECDC variant surveillance CSV (data/raw/ecdc_variants.csv).
 Variants are grouped by WHO variant family (Alpha, Beta/Gamma, Delta,
@@ -9,7 +9,14 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
 
-from utils import apply_style, data_raw, figures_dir, save_figure, save_plotly_html
+from utils import (
+    apply_style,
+    axis_limits,
+    data_raw,
+    figures_dir,
+    save_figure,
+    save_plotly_html,
+)
 
 INTERACTIVE_OUT = figures_dir / "plot10_variants_interactive.html"
 
@@ -111,7 +118,7 @@ def _build_static(group_df: pd.DataFrame, col_order: list[str], colors: list[str
     apply_style(ax, "SARS-CoV-2 variant dominance in Germany", date_axis=True)
     ax.set_ylabel("Share of sequenced samples (%)")
     ax.set_xlabel("Date")
-    ax.set_ylim(0, 100)
+    ax.set_ylim(*axis_limits["percentage"])
     ax.set_xlim(group_df.index.min(), group_df.index.max())
 
     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
@@ -122,14 +129,15 @@ def _build_static(group_df: pd.DataFrame, col_order: list[str], colors: list[str
     ax.legend(
         handles[::-1],
         labels[::-1],
-        loc="upper left",
-        bbox_to_anchor=(1.01, 1.0),
-        fontsize=12,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.22),
+        ncol=4,
+        fontsize=11.5,
         frameon=True,
         framealpha=0.92,
     )
 
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.10, right=0.96, top=0.88, bottom=0.30)
     save_figure(fig, "plot10_variants_heatmap")
 
 

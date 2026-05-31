@@ -1,4 +1,4 @@
-"""Plot 09 – Excess mortality in Germany.
+"""Plot 09 - Excess mortality in Germany.
 
 Plots the OWID `excess_mortality` column (percentage deviation from the
 2015-2019 baseline provided by the Human Mortality Database / WMD) as a
@@ -26,7 +26,7 @@ def main() -> None:
     """Generate the excess mortality bar chart."""
     df = load_germany_daily()
 
-    # excess_mortality is weekly in OWID — keep non-NaN rows only
+    # excess_mortality is weekly in OWID - keep non-NaN rows only
     em = df[["date", "excess_mortality"]].dropna(subset=["excess_mortality"]).copy()
     em = em[em["date"] >= "2020-01-01"].copy()
 
